@@ -21,6 +21,12 @@ template<typename T> T bitfield(T in, u8 pos, u8 len = 1)
 	return (in >> pos) & (len ? (T(1 << len) - 1) : 1);
 }
 
+class x1_010_intf
+{
+public:
+	virtual u8 read_rom(u32 address) { return 0; }
+};
+
 class x1_010_core
 {
 	friend class x1_010_intf;
@@ -110,13 +116,6 @@ private:
 	s32 m_out[2] = {0};
 
 	x1_010_intf &m_intf;
-};
-
-class x1_010_intf
-{
-	friend class x1_010_core;
-public:
-	virtual u8 read_rom(u32 address) { return 0; }
 };
 
 #endif
