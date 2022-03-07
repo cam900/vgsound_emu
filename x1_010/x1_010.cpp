@@ -113,7 +113,7 @@ void x1_010_core::voice_t::tick()
 			vol_out[0] = bitfield(vol_wave, 4, 4);
 			vol_out[1] = bitfield(vol_wave, 0, 4);
 			// get PCM sample
-			data = m_host.m_intf.read_rom(bitfield(acc, 4, 20));
+			data = m_host.m_intf.read_byte(bitfield(acc, 4, 20));
 			acc += bitfield(freq, 0, 8) >> flag.div;
 			if ((acc >> 16) > (0xff ^ end_envshape))
 				flag.keyon = false;
