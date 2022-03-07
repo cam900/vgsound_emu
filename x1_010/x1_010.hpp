@@ -4,35 +4,19 @@
 	See x1_010.cpp for more info.
 */
 
+#include "../core/util.hpp"
 #include <algorithm>
 #include <memory>
 
 #ifndef _VGSOUND_EMU_X1_010_HPP
 #define _VGSOUND_EMU_X1_010_HPP
 
-typedef unsigned char   u8;
-typedef unsigned short u16;
-typedef unsigned int   u32;
-typedef signed char     s8;
-typedef signed int     s32;
-
-template<typename T> T bitfield(T in, u8 pos, u8 len = 1)
-{
-	return (in >> pos) & (len ? (T(1 << len) - 1) : 1);
-}
-
-class x1_010_intf
-{
-public:
-	virtual u8 read_rom(u32 address) { return 0; }
-};
-
 class x1_010_core
 {
-	friend class x1_010_intf;
+	friend class vgsound_emu_mem_intf;
 public:
 	// construction
-	x1_010_core(x1_010_intf &intf)
+	x1_010_core(vgsound_emu_mem_intf &intf)
 		: m_voice{*this,*this,*this,*this,
 		          *this,*this,*this,*this,
 		          *this,*this,*this,*this,
@@ -115,7 +99,7 @@ private:
 	// output data
 	s32 m_out[2] = {0};
 
-	x1_010_intf &m_intf;
+	vgsound_emu_mem_intf &m_intf;
 };
 
 #endif
