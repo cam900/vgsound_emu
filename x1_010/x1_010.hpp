@@ -1,5 +1,9 @@
 /*
-	Seta/Allumer X1-010 Emulation core by cam900
+	License: BSD-3-Clause
+	see LICENSE for more details
+
+	Copyright holders: cam900
+	Seta/Allumer X1-010 Emulation core
 
 	See x1_010.cpp for more info.
 */
@@ -11,11 +15,13 @@
 #ifndef _VGSOUND_EMU_X1_010_HPP
 #define _VGSOUND_EMU_X1_010_HPP
 
+#pragma once
+
 class x1_010_core
 {
 	friend class vgsound_emu_mem_intf;
 public:
-	// construction
+	// constructor
 	x1_010_core(vgsound_emu_mem_intf &intf)
 		: m_voice{*this,*this,*this,*this,
 		          *this,*this,*this,*this,

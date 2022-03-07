@@ -1,5 +1,9 @@
 /*
-	see LICENSE.md for its license (BSD-3-Clause, License holder: cam900)
+	License: BSD-3-Clause
+	see LICENSE for more details
+
+	Copyright holders: cam900
+	Various core utilities for vgsound_emu
 */
 
 #include <algorithm>
@@ -7,6 +11,8 @@
 
 #ifndef _VGSOUND_EMU_CORE_UTIL_HPP
 #define _VGSOUND_EMU_CORE_UTIL_HPP
+
+#pragma once
 
 typedef unsigned char       u8;
 typedef unsigned short     u16;

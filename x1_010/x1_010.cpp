@@ -1,6 +1,9 @@
 /*
-	Seta/Allumer X1-010 Emulation core by cam900
-	License:BSD-3-Clause
+	License: BSD-3-Clause
+	see LICENSE for more details
+
+	Copyright holders: cam900
+	Seta/Allumer X1-010 Emulation core
 
 	the chip has 16 voices, all voices can be switchable to Wavetable or PCM sample playback mode.
 	It has also 2 output channels, but no known hardware using this feature for stereo sound.
