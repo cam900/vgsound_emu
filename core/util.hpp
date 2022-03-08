@@ -1,6 +1,6 @@
 /*
 	License: BSD-3-Clause
-	see LICENSE for more details
+	see https://github.com/cam900/vgsound_emu/LICENSE for more details
 
 	Copyright holders: cam900
 	Various core utilities for vgsound_emu
