@@ -172,8 +172,8 @@ void k007232_core::voice_t::keyon()
 // reset chip
 void k007232_core::reset()
 {
-	for (int i = 0; i < 2; i++)
-		m_voice[i].reset();
+	for (auto & elem : m_voice)
+		elem.reset();
 
 	m_intf.write_slev(0);
 
