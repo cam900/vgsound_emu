@@ -25,9 +25,17 @@ typedef signed long long   s64;
 typedef float              f32;
 typedef double             f64;
 
+// get bitfield, bitfield(input, position, len)
 template<typename T> T bitfield(T in, u8 pos, u8 len = 1)
 {
 	return (in >> pos) & (len ? (T(1 << len) - 1) : 1);
+}
+
+// get sign extended value, sign_ext<type>(input, len)
+template<typename T> T sign_ext(T in, u8 len)
+{
+	len = std::max(0, (8 << sizeof(T)) - len);
+	return T(T(in) << len) >> len;
 }
 
 class vgsound_emu_mem_intf

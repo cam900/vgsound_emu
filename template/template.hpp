@@ -47,7 +47,7 @@ private:
 		// registers
 		template_core &m_host;
 	};
-	m_voice[Num]
+	voice_t m_voice[Num];
 	*/
 	vgsound_emu_mem_intf &m_intf; // common memory interface
 };
