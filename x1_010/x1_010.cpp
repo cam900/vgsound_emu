@@ -46,7 +46,7 @@
 	2       xxxx xxxx Frequency LSB*
 	3       xxxx xxxx "" MSB
 
-	4       xxxx xxxx Envelope period (.10 fixed point, Low 8 bit)
+	4       xxxx xxxx Envelope period*
 
 	5       ---x xxxx Envelope shape select (!= 0 : Reserved for Voice registers)
 
@@ -69,8 +69,13 @@
 	1f80...1fff Wavetable data 31
 	-----------------------------
 
-	* Frequency is 4.4 fixed point for PCM,
-	  6.10 for Wavetable.
+	* Frequency fomula:
+		Wavetable, Divider Clear: Frequency value * (Input clock / 524288)
+		Wavetable, Divider Set:   Frequency value * (Input clock / 1048576)
+		PCM, Divider Clear:       Frequency value * (Input clock / 8192)
+		PCM, Divider Set:         Frequency value * (Input clock / 16384)
+		Envelope:                 Envelope period * (Input clock / 524288) - Frequency divider not affected?
+
 	  Frequency divider is higher precision or just right shift?
 	  needs verification.
 */
@@ -107,8 +112,8 @@ void x1_010_core::voice_t::tick()
 			else
 				env_acc = bitfield(env_acc, 0, 17);
 			// get wavetable data
-			data = m_host.m_wave[(bitfield(vol_wave, 0, 5) << 7) | bitfield(acc, 10, 7)];
-			acc = bitfield(acc + (freq >> flag.div), 0, 17);
+			data = m_host.m_wave[(bitfield(vol_wave, 0, 5) << 7) | bitfield(acc, 11, 7)];
+			acc = bitfield(acc + (freq << (1 - flag.div)), 0, 18);
 		}
 		else // PCM sample
 		{
@@ -116,9 +121,9 @@ void x1_010_core::voice_t::tick()
 			vol_out[0] = bitfield(vol_wave, 4, 4);
 			vol_out[1] = bitfield(vol_wave, 0, 4);
 			// get PCM sample
-			data = m_host.m_intf.read_byte(bitfield(acc, 4, 20));
-			acc += bitfield(freq, 0, 8) >> flag.div;
-			if ((acc >> 16) > (0xff ^ end_envshape))
+			data = m_host.m_intf.read_byte(bitfield(acc, 5, 20));
+			acc += u32(bitfield(freq, 0, 8)) << (1 - flag.div);
+			if ((acc >> 17) > (0xff ^ end_envshape))
 				flag.keyon = false;
 		}
 	}
