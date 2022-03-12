@@ -31,7 +31,7 @@ void k005289_core::voice_t::tick()
 {
 	if (bitfield(++counter, 0, 12) == 0)
 	{
-		addr = (addr + 1) & 0x1f;
+		addr = bitfield(addr + 1, 0, 5);
 		counter = freq;
 	}
 }
