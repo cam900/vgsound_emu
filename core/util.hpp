@@ -25,6 +25,8 @@ typedef signed long long   s64;
 typedef float              f32;
 typedef double             f64;
 
+const f64 PI = 3.1415926535897932384626433832795;
+
 // get bitfield, bitfield(input, position, len)
 template<typename T> T bitfield(T in, u8 pos, u8 len = 1)
 {
