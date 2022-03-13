@@ -35,7 +35,7 @@ public:
 	{
 	}
 	// host accessors
-	void keyon(u8 voice) { m_voice[voice & 1].keyon(); }
+	u8 read(u8 address, u8 data);
 	void write(u8 address, u8 data);
 
 	// internal state
@@ -43,8 +43,8 @@ public:
 	void tick();
 
 	// getters for debug, trackers, etc
-	s32 output(u8 voice) { return m_voice[voice & 1].out; } // output for each voices, ASD/BSD pin
-	u8 reg_r(u8 address) { return m_reg[address & 0xf]; }
+	s32 output(u8 ch) { return m_out[ch & 1]; } // output for each channels
+	u8 reg_r(u8 address) { return m_reg[address & 0x3f]; }
 
 private:
 	struct voice_t
@@ -80,9 +80,14 @@ private:
 	};
 	voice_t m_voice[4];
 
+	u8 m_host2snd[2] = {0};
+	u8 m_snd2host[2] = {0};
+	u8 m_ctrl = 0;      // chip control
+
 	k053260_intf &m_intf; // common memory interface
 
 	u8 m_reg[64] = {0}; // register pool
+	s32 m_out[2] = {0}; // stereo output
 };
 
 #endif
