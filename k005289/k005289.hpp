@@ -21,9 +21,9 @@ class k005289_core
 {
 public:
 	// accessors, getters, setters
-	u8 addr(int voice) { return bitfield(m_voice[voice & 1].addr, 0, 5); }             // 1QA...E/2QA...E pin
-	void load(int voice, u16 addr) { m_voice[voice & 1].load(bitfield(addr, 0, 12)); } // LD1/2 pin, A0...11 pin
-	void update(int voice) { m_voice[voice & 1].update(); }                            // TG1/2 pin
+	u8 addr(int voice) { return m_voice[voice & 1].addr; }            // 1QA...E/2QA...E pin
+	void load(int voice, u16 addr) { m_voice[voice & 1].load(addr); } // LD1/2 pin, A0...11 pin
+	void update(int voice) { m_voice[voice & 1].update(); }           // TG1/2 pin
 
 	// internal state
 	void reset();
