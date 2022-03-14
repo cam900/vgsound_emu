@@ -5,7 +5,7 @@
 	Copyright holder(s): cam900
 	Konami SCC emulation core
 
-	See k051649.cpp for more info.
+	See scc.cpp for more info.
 */
 
 #include "../core/util.hpp"

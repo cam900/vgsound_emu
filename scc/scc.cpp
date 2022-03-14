@@ -346,7 +346,7 @@ void scc_core::voice_t::tick()
 			counter = (counter & ~0xf00) | (bitfield(bitfield(counter, 8, 4) - 1, 0, 4) << 8);
 		}
 		else
-			counter--;
+			counter = bitfield(counter - 1, 0, 12);
 
 		// handle counter carry
 		bool carry = m_host.m_test.freq_8bit ? (bitfield(temp, 0, 8) == 0) :
@@ -423,11 +423,11 @@ void scc_core::freq_vol_enable_w(u8 address, u8 data)
 			m_voice[address - 0xa].volume = bitfield(data, 0, 4);
 			break;
 		case 0xf: // 0x*f Enable/Disable flag
-			for (auto & elem : m_voice)
-			{
-				elem.enable = bitfield(data, 0);
-				data >>= 1;
-			}
+			m_voice[0].enable = bitfield(data, 0);
+			m_voice[1].enable = bitfield(data, 1);
+			m_voice[2].enable = bitfield(data, 2);
+			m_voice[3].enable = bitfield(data, 3);
+			m_voice[4].enable = bitfield(data, 4);
 			break;
 	}
 }
