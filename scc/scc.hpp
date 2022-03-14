@@ -3,7 +3,7 @@
 	see https://github.com/cam900/vgsound_emu/LICENSE for more details
 
 	Copyright holder(s): cam900
-	Konami K051649 emulation core
+	Konami SCC emulation core
 
 	See k051649.cpp for more info.
 */
@@ -12,8 +12,8 @@
 #include <algorithm>
 #include <memory>
 
-#ifndef _VGSOUND_EMU_K051649_HPP
-#define _VGSOUND_EMU_K051649_HPP
+#ifndef _VGSOUND_EMU_SCC_HPP
+#define _VGSOUND_EMU_SCC_HPP
 
 #pragma once
 

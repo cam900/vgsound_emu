@@ -315,7 +315,7 @@
 
 */
 
-#include "k051649.hpp"
+#include "scc.hpp"
 
 // shared SCC features
 void scc_core::tick()
@@ -326,7 +326,6 @@ void scc_core::tick()
 		elem.tick();
 		m_out += elem.out;
 	}
-	m_out >>= 4; // scale to 11 bit, then send output to DA0...11 pin
 }
 
 void scc_core::voice_t::tick()
@@ -353,8 +352,9 @@ void scc_core::voice_t::tick()
 			counter = pitch;
 		}
 	}
+	// get output
 	if (enable)
-		out = wave[addr] * volume;
+		out = (wave[addr] * volume) >> 4; // scale to 11 bit digital output
 	else
 		out = 0;
 }
