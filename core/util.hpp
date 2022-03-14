@@ -47,6 +47,10 @@ public:
 	virtual u16 read_word(u32 address) { return 0; }
 	virtual u32 read_dword(u32 address) { return 0; }
 	virtual u64 read_qword(u32 address) { return 0; }
+	virtual void write_byte(u32 address, u8 data) { }
+	virtual void write_word(u32 address, u16 data) { }
+	virtual void write_dword(u32 address, u32 data) { }
+	virtual void write_qword(u32 address, u64 data) { }
 };
 
 #endif
