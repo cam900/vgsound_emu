@@ -57,6 +57,9 @@
 
 	--------------------------------------------------------------------
 
+	Address   Bit       R/W Description
+	          7654 3210
+
 	5000      --xx xxxx   W Bank select, Page 0
 	5001-57ff Mirror of 5000
 
@@ -77,6 +80,9 @@
 	--------------------------------------------------------------------
 
 	9800-987f Waveform
+
+	Address   Bit       R/W Description
+	          7654 3210
 
 	9800-981f xxxx xxxx R/W Channel 0 Waveform (32 byte, 8 bit signed)
 	9820-983f xxxx xxxx R/W Channel 1 ""
@@ -155,6 +161,9 @@
 
 	--------------------------------------------------------------------
 
+	Address   Bit       R/W Description
+	          7654 3210
+
 	5000      xxxx xxxx   W Bank select, Page 0
 	5001-57ff Mirror of 5000
 
@@ -175,6 +184,9 @@
 
 	--------------------------------------------------------------------
 
+	Address   Bit       R/W Description
+	          7654 3210
+
 	bffe      --x- ----   W SCC operation mode
 	          --0- ----   W SCC Compatible mode
 	          --1- ----   W SCC+ mode
@@ -193,6 +205,9 @@
 	--------------------------------------------------------------------
 
 	9800-987f Waveform
+
+	Address   Bit       R/W Description
+	          7654 3210
 
 	9800-981f xxxx xxxx R/W Channel 0 Waveform (32 byte, 8 bit signed)
 	9820-983f xxxx xxxx R/W Channel 1 ""
@@ -246,6 +261,9 @@
 	--------------------------------------------------------------------
 
 	b800-b89f Waveform
+
+	Address   Bit       R/W Description
+	          7654 3210
 
 	b800-b81f xxxx xxxx R/W Channel 0 Waveform (32 byte, 8 bit signed)
 	b820-b83f xxxx xxxx R/W Channel 1 ""
@@ -315,7 +333,7 @@ void scc_core::voice_t::tick()
 {
 	if (pitch >= 9) // or voice is halted
 	{
-		// update counter
+		// update counter - Post decrement
 		u16 temp = counter;
 		if (m_host.m_test.freq_4bit) // 4 bit frequency mode
 		{
