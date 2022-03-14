@@ -311,7 +311,13 @@
 
 	--------------------------------------------------------------------
 
-	SCC Frequency calculation: Input clock / (Pitch input + 1)
+	SCC Frequency calculation:
+	if 8 bit frequency then
+		Frequency = Input clock / ((bit 0 to 7 of Pitch input) + 1)
+	else if 4 bit frequency then
+		Frequency = Input clock / ((bit 8 to 11 of Pitch input) + 1)
+	else
+		Frequency = Input clock / (Pitch input + 1)
 
 */
 
