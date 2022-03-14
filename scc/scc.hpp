@@ -64,10 +64,6 @@ protected:
 	// accessor
 	void freq_vol_enable_w(u8 address, u8 data);
 
-	// internal state
-	void reset();
-	void tick();
-
 	struct test_t
 	{
 		// constructor
