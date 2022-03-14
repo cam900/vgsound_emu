@@ -20,8 +20,8 @@
 class k053260_intf
 {
 public:
-	virtual u8 read_sample(u8 ne, u32 address) { return 0; } // NE pin is executing voice number, and used for per-voice sample bank.
-	virtual void write_slev(u8 out) { } // SLEV pin actived when 0x0c register accessed
+	virtual u8 read_sample(u32 address) { return 0; } // sample fetch
+	virtual void write_int(u8 out) { } // timer interrupt
 };
 
 class k053260_core
@@ -34,8 +34,13 @@ public:
 		, m_intf(intf)
 	{
 	}
-	// host accessors
-	u8 read(u8 address, u8 data);
+
+	// communications
+	u8 snd2host_r(u8 address) { return m_snd2host[address & 1]; }
+	void host2snd_w(u8 address, u8 data) { m_host2snd[address & 1] = data; }
+
+	// sound accessors
+	u8 read(u8 address);
 	void write(u8 address, u8 data);
 
 	// internal state
@@ -47,6 +52,7 @@ public:
 	u8 reg_r(u8 address) { return m_reg[address & 0x3f]; }
 
 private:
+	const int pan_dir[8] = {-1,0,24,35,45,55,66,90}; // pan direction
 	struct voice_t
 	{
 		// constructor
@@ -62,27 +68,68 @@ private:
 
 		// registers
 		k053260_core &m_host;
-		bool busy = false;  // busy status
-		bool loop = false;  // loop flag
-		bool adpcm = false; // ADPCM flag
-		u16 pitch = 0;      // pitch
-		u32 start = 0;      // start position
-		u16 length = 0;     // source length
-		u8 volume = 0;      // master volume
-		u8 pan = 0;         // master pan
-		u16 counter = 0;    // frequency counter
-		u32 addr = 0;       // current address
-		s32 remain = 0;     // remain for end sample
-		u8 bitpos = 0;      // bit position for ADPCM decoding
-		u8 data = 0;        // current data
-		s8 adpcm_buf = 0;   // ADPCM buffer
-		s32 out[2] = {0};        // current output
+		bool enable = false; // enable flag
+		bool busy = false;   // busy status
+		bool loop = false;   // loop flag
+		bool adpcm = false;  // ADPCM flag
+		u16 pitch = 0;       // pitch
+		u32 start = 0;       // start position
+		u16 length = 0;      // source length
+		u8 volume = 0;       // master volume
+		int pan = 0;         // master pan
+		u16 counter = 0;     // frequency counter
+		u32 addr = 0;        // current address
+		s32 remain = 0;      // remain for end sample
+		u8 bitpos = 4;       // bit position for ADPCM decoding
+		u8 data = 0;         // current data
+		s8 adpcm_buf = 0;    // ADPCM buffer
+		s32 out[2] = {0};    // current output
 	};
 	voice_t m_voice[4];
 
 	u8 m_host2snd[2] = {0};
 	u8 m_snd2host[2] = {0};
-	u8 m_ctrl = 0;      // chip control
+	struct ctrl_t
+	{
+		ctrl_t()
+			: rom_read(0)
+			, sound_en(0)
+			, input_en(0)
+			, dual_chip(0)
+		{};
+
+		void reset()
+		{
+			rom_read = 0;
+			sound_en = 0;
+			input_en = 0;
+			dual_chip = 0;
+		}
+
+		u8 rom_read  : 1; // ROM readback
+		u8 sound_en  : 1; // Sound enable
+		u8 input_en  : 1; // Input enable?
+		u8 dual_chip : 1; // Dual chip mode?
+	};
+	ctrl_t m_ctrl;      // chip control
+
+	struct timer_t
+	{
+		timer_t()
+			: clock(0)
+			, state(0)
+		{};
+	
+		void reset()
+		{
+			clock = 0;
+			state = 0;
+		}
+
+		u8 clock : 4; // timer clock (16 clock)
+		u8 state : 2; // timer state (4 state)
+	};
+	timer_t m_timer;
 
 	k053260_intf &m_intf; // common memory interface
 

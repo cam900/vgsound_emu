@@ -150,10 +150,10 @@ void k007232_core::voice_t::write(u8 address, u8 data)
 			start = (start & ~0x000ff) | data;
 			break;
 		case 3: // start address bit 8-15
-			start = (start & ~0x0ff00) | (u16(data) << 8);
+			start = (start & ~0x0ff00) | (u32(data) << 8);
 			break;
 		case 4: // start address bit 16
-			start = (start & ~0x10000) | (u16(bitfield(data, 16)) << 16);
+			start = (start & ~0x10000) | (u32(bitfield(data, 16)) << 16);
 			break;
 		case 5: // keyon trigger
 			keyon();
