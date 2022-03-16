@@ -27,8 +27,8 @@ public:
 	{};
 
 	// accessors
-	virtual u8 scc_r(u8 address) = 0;
-	virtual void scc_w(u8 address, u8 data) = 0;
+	virtual u8 scc_r(bool is_sccplus, u8 address) = 0;
+	virtual void scc_w(bool is_sccplus, u8 address, u8 data) = 0;
 
 	// internal state
 	virtual void reset();
@@ -51,8 +51,8 @@ protected:
 
 		// registers
 		scc_core &m_host;
-		bool enable = false; // output enable flag
 		s8 wave[32] = {0};   // internal waveform
+		bool enable = false; // output enable flag
 		u16 pitch = 0;       // pitch
 		u8 volume = 0;       // volume
 		u8 addr = 0;         // waveform pointer
@@ -62,6 +62,8 @@ protected:
 	voice_t m_voice[5];    // 5 voices
 
 	// accessor
+	u8 wave_r(bool is_sccplus, u8 address);
+	void wave_w(bool is_sccplus, u8 address, u8 data);
 	void freq_vol_enable_w(u8 address, u8 data);
 
 	struct test_t
@@ -102,25 +104,16 @@ class k051649_scc_core : public scc_core
 {
 public:
 	// accessors
-	virtual u8 scc_r(u8 address) override;
-	virtual void scc_w(u8 address, u8 data) override;
+	virtual u8 scc_r(bool is_sccplus, u8 address) override;
+	virtual void scc_w(bool is_sccplus, u8 address, u8 data) override;
 };
 
 class k052539_scc_core : public k051649_scc_core
 {
 public:
 	// accessors
-	virtual u8 scc_r(u8 address) override;
-	virtual void scc_w(u8 address, u8 data) override;
-
-	// virtual overrides
-	virtual void reset() override;
-
-	// setters
-	void set_is_sccplus(bool is_sccplus) { m_is_sccplus = is_sccplus; }
-
-protected:
-	bool m_is_sccplus = false;
+	virtual u8 scc_r(bool is_sccplus, u8 address) override;
+	virtual void scc_w(bool is_sccplus, u8 address, u8 data) override;
 };
 
 // MegaROM Mapper with SCC
@@ -151,7 +144,7 @@ private:
 		u8 bank[4] = {0,1,2,3};
 	};
 	k051649_mapper_t m_mapper;
-	bool m_scc_enable;
+	bool m_scc_enable = false;
 
 	vgsound_emu_mem_intf m_intf;
 };
@@ -185,7 +178,8 @@ private:
 		bool ram_enable[4] = {false};
 	};
 	k052539_mapper_t m_mapper;
-	bool m_scc_enable;
+	bool m_scc_enable = false;
+	bool m_is_sccplus = false;
 
 	vgsound_emu_mem_intf m_intf;
 };

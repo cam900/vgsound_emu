@@ -378,19 +378,70 @@ void scc_core::reset()
 void scc_core::voice_t::reset()
 {
 	std::fill(std::begin(wave), std::end(wave), 0);
+	enable = false;
 	pitch = 0;
 	volume = 0;
 	addr = 0;
 	counter = 0;
-}
-
-void k052539_scc_core::reset()
-{
-	scc_core::reset();
-	m_is_sccplus = false;
+	out = 0;
 }
 
 // SCC accessors
+u8 scc_core::wave_r(bool is_sccplus, u8 address)
+{
+	u8 ret = 0xff;
+	const u8 voice = bitfield(address, 5, 3);
+	if (voice > 4)
+		return;
+
+	u8 wave_addr = bitfield(address, 0, 5);
+
+	if (m_test.rotate) // rotate flag
+		wave_addr = bitfield(wave_addr + m_voice[voice].addr, 0, 5);
+
+	if (!is_sccplus)
+	{
+		if (voice == 3) // rotate voice 3~4 flag
+		{
+			if (m_test.rotate4 || m_test.rotate) // rotate flag
+				wave_addr = bitfield(bitfield(address, 0, 5) + m_voice[3 + m_test.rotate].addr, 0, 5);
+		}
+		else
+			return m_voice[voice].wave[wave_addr];
+	}
+	else
+		return m_voice[voice].wave[wave_addr];
+
+	return 0xff;
+}
+
+void scc_core::wave_w(bool is_sccplus, u8 address, u8 data)
+{
+	if (m_test.rotate) // write protected
+		return;
+
+	const u8 voice = bitfield(address, 5, 3);
+	if (voice > 4)
+		return;
+
+	const u8 wave_addr = bitfield(address, 0, 5);
+
+	if (!is_sccplus)
+	{
+		if (((voice >= 3) && m_test.rotate4) || (voice >= 4)) // Ignore if write protected, or voice 4
+			return;
+		if (voice >= 3) // voice 3, 4 shares waveform
+		{
+			m_voice[3].wave[wave_addr] = data;
+			m_voice[4].wave[wave_addr] = data;
+		}
+		else
+			m_voice[voice].wave[wave_addr] = data;
+	}
+	else
+		m_voice[voice].wave[wave_addr] = data;
+}
+
 void scc_core::freq_vol_enable_w(u8 address, u8 data)
 {
 	const u8 voice_freq = bitfield(address, 1, 3);
@@ -432,25 +483,16 @@ void scc_core::freq_vol_enable_w(u8 address, u8 data)
 	}
 }
 
-void k051649_scc_core::scc_w(u8 address, u8 data)
+void k051649_scc_core::scc_w(bool is_sccplus, u8 address, u8 data)
 {
 	const u8 voice = bitfield(address, 5, 3);
-	const u8 wave = bitfield(address, 0, 5);
-	const bool rotate = m_test.rotate;
 	switch (voice)
 	{
 		case 0b000: // 0x00-0x1f Voice 0 Waveform
 		case 0b001: // 0x20-0x3f Voice 1 Waveform
 		case 0b010: // 0x40-0x5f Voice 2 Waveform
-			if (rotate) // Read only
-				return;
-			m_voice[voice].wave[wave] = data;
-			break;
 		case 0b011: // 0x60-0x7f Voice 3/4 Waveform
-			if (m_test.rotate || m_test.rotate4) // Read only
-				return;
-			m_voice[3].wave[wave] = data;
-			m_voice[4].wave[wave] = data;
+			wave_w(false, address, data);
 			break;
 		case 0b100: // 0x80-0x9f Pitch, Volume, Enable
 			freq_vol_enable_w(address, data);
@@ -466,121 +508,107 @@ void k051649_scc_core::scc_w(u8 address, u8 data)
 	m_reg[address] = data;
 }
 
-void k052539_scc_core::scc_w(u8 address, u8 data)
+void k052539_scc_core::scc_w(bool is_sccplus, u8 address, u8 data)
 {
 	const u8 voice = bitfield(address, 5, 3);
-	const u8 wave = bitfield(address, 0, 5);
-	const bool rotate = m_test.rotate;
-	switch (bitfield(address, 5, 3))
+	if (is_sccplus)
 	{
-		case 0b000: // 0x00-0x1f Voice 0 Waveform
-		case 0b001: // 0x20-0x3f Voice 1 Waveform
-		case 0b010: // 0x40-0x5f Voice 2 Waveform
-			if (rotate) // Read only
-				return;
-			m_voice[voice].wave[wave] = data;
-			break;
-		case 0b011: // 0x60-0x7f Voice 3/4 Waveform (SCC) / Voice 3 Waveform (SCC+)
-			if (rotate) // Read only
-				return;
-			m_voice[3].wave[wave] = data;
-			if (!m_is_sccplus)
-				m_voice[4].wave[wave] = data;
-			break;
-		case 0b100: // 0x80-0x9f Pitch, Volume, Enable (SCC) / Voice 4 Waveform (SCC+)
-			if (m_is_sccplus && (!rotate)) // Read only
-				m_voice[4].wave[wave] = data;
-			else if (!m_is_sccplus)
+		switch (voice)
+		{
+			case 0b000: // 0x00-0x1f Voice 0 Waveform
+			case 0b001: // 0x20-0x3f Voice 1 Waveform
+			case 0b010: // 0x40-0x5f Voice 2 Waveform
+			case 0b011: // 0x60-0x7f Voice 3 Waveform
+			case 0b100: // 0x80-0x9f Voice 4 Waveform
+				wave_w(true, address, data);
+				break;
+			case 0b101: // 0xa0-0xbf Pitch, Volume, Enable
 				freq_vol_enable_w(address, data);
-			break;
-		case 0b101: // 0xa0-0xbf Pitch, Volume, Enable (SCC+)
-			if (m_is_sccplus)
+				break;
+			case 0b110: // 0xc0-0xdf Test register
+				m_test.freq_4bit = bitfield(data, 0);
+				m_test.freq_8bit = bitfield(data, 1);
+				m_test.resetpos = bitfield(data, 5);
+				m_test.rotate = bitfield(data, 6);
+				break;
+			default:
+				break;
+		}
+	}
+	else
+	{
+		switch (voice)
+		{
+			case 0b000: // 0x00-0x1f Voice 0 Waveform
+			case 0b001: // 0x20-0x3f Voice 1 Waveform
+			case 0b010: // 0x40-0x5f Voice 2 Waveform
+			case 0b011: // 0x60-0x7f Voice 3/4 Waveform
+				wave_w(false, address, data);
+				break;
+			case 0b100: // 0x80-0x9f Pitch, Volume, Enable
 				freq_vol_enable_w(address, data);
-			break;
-		case 0b110: // 0xc0-0xdf Test register
-			m_test.freq_4bit = bitfield(data, 0);
-			m_test.freq_8bit = bitfield(data, 1);
-			m_test.resetpos = bitfield(data, 5);
-			m_test.rotate = bitfield(data, 6);
-			break;
+				break;
+			case 0b110: // 0xc0-0xdf Test register
+				m_test.freq_4bit = bitfield(data, 0);
+				m_test.freq_8bit = bitfield(data, 1);
+				m_test.resetpos = bitfield(data, 5);
+				m_test.rotate = bitfield(data, 6);
+				break;
+			default:
+				break;
+		}
 	}
 	m_reg[address] = data;
 }
 
-u8 k051649_scc_core::scc_r(u8 address)
+u8 k051649_scc_core::scc_r(bool is_sccplus, u8 address)
 {
 	const u8 voice = bitfield(address, 5, 3);
 	const u8 wave = bitfield(address, 0, 5);
-	const bool rotate = m_test.rotate;
 	u8 ret = 0xff;
-	switch (bitfield(address, 5, 3))
+	switch (voice)
 	{
 		case 0b000: // 0x00-0x1f Voice 0 Waveform
 		case 0b001: // 0x20-0x3f Voice 1 Waveform
 		case 0b010: // 0x40-0x5f Voice 2 Waveform
-			if (rotate) // rotate flag
-				ret = m_voice[voice].wave[bitfield(address + m_voice[voice].addr, 0, 5)];
-			else
-				ret = m_voice[voice].wave[wave];
-			break;
 		case 0b011: // 0x60-0x7f Voice 3 Waveform
-			if (rotate || m_test.rotate4) // rotate flag for Voice 3/4
-				ret = m_voice[voice].wave[bitfield(address + m_voice[voice + m_test.rotate].addr, 0, 5)];
-			else
-				ret = m_voice[voice].wave[wave];
-			break;
 		case 0b101: // 0xa0-0xbf Voice 4 Waveform
-			if (rotate) // rotate flag
-				ret = m_voice[4].wave[bitfield(address + m_voice[4].addr, 0, 5)];
-			else
-				ret = m_voice[4].wave[wave];
+			ret = wave_r(false, (std::min<u8>(4, voice) << 5) | wave);
 			break;
 	}
 	return ret;
 }
 
-u8 k052539_scc_core::scc_r(u8 address)
+u8 k052539_scc_core::scc_r(bool is_sccplus, u8 address)
 {
 	const u8 voice = bitfield(address, 5, 3);
 	const u8 wave = bitfield(address, 0, 5);
-	const bool rotate = m_test.rotate;
 	u8 ret = 0xff;
-	switch (bitfield(address, 5, 3))
+	if (is_sccplus)
 	{
-		case 0b000: // 0x00-0x1f Voice 0 Waveform
-		case 0b001: // 0x20-0x3f Voice 1 Waveform
-		case 0b010: // 0x40-0x5f Voice 2 Waveform
-			if (rotate) // rotate flag
-				ret = m_voice[voice].wave[bitfield(address + m_voice[voice].addr, 0, 5)];
-			else
-				ret = m_voice[voice].wave[wave];
-			break;
-		case 0b011: // 0x60-0x7f Voice 3 Waveform
-			if (m_is_sccplus && rotate) // rotate flag
-				ret = m_voice[voice].wave[bitfield(address + m_voice[voice].addr, 0, 5)];
-			else if (rotate) // rotate flag for voice 4
-				ret = m_voice[voice].wave[bitfield(address + m_voice[voice + m_test.rotate].addr, 0, 5)];
-			else
-				ret = m_voice[voice].wave[wave];
-			break;
-		case 0b100: // 0x80-0x9f Voice 4 Waveform (SCC+)
-			if (m_is_sccplus)
-			{
-				if (rotate) // rotate flag
-					ret = m_voice[voice].wave[bitfield(address + m_voice[voice].addr, 0, 5)];
-				else
-					ret = m_voice[voice].wave[wave];
-			}
-			break;
-		case 0b101: // 0xa0-0xbf Voice 4 Waveform (SCC)
-			if (!m_is_sccplus)
-			{
-				if (rotate) // rotate flag
-					ret = m_voice[4].wave[bitfield(address + m_voice[4].addr, 0, 5)];
-				else
-					ret = m_voice[4].wave[wave];
-			}
-			break;
+		switch (voice)
+		{
+			case 0b000: // 0x00-0x1f Voice 0 Waveform
+			case 0b001: // 0x20-0x3f Voice 1 Waveform
+			case 0b010: // 0x40-0x5f Voice 2 Waveform
+			case 0b011: // 0x60-0x7f Voice 3 Waveform
+			case 0b100: // 0x80-0x9f Voice 4 Waveform
+				ret = wave_r(true, address);
+				break;
+		}
+	}
+	else
+	{
+		switch (voice)
+		{
+			case 0b000: // 0x00-0x1f Voice 0 Waveform
+			case 0b001: // 0x20-0x3f Voice 1 Waveform
+			case 0b010: // 0x40-0x5f Voice 2 Waveform
+			case 0b011: // 0x60-0x7f Voice 3 Waveform
+			case 0b101: // 0xa0-0xbf Voice 4 Waveform
+				ret = wave_r(false, (std::min<u8>(4, voice) << 5) | wave);
+				break;
+		}
 	}
 	return ret;
 }
@@ -590,12 +618,15 @@ void k051649_core::reset()
 {
 	k051649_scc_core::reset();
 	m_mapper.reset();
+	m_scc_enable = false;
 }
 
 void k052539_core::reset()
 {
 	k052539_scc_core::reset();
 	m_mapper.reset();
+	m_scc_enable = false;
+	m_is_sccplus = false;
 }
 
 void k051649_core::k051649_mapper_t::reset()
@@ -619,7 +650,7 @@ void k052539_core::k052539_mapper_t::reset()
 u8 k051649_core::read(u16 address)
 {
 	if ((bitfield(address, 11, 5) == 0b10011) && m_scc_enable)
-		return scc_r(u8(address));
+		return scc_r(false, u8(address));
 
 	return m_intf.read_byte((u32(m_mapper.bank[bitfield(address, 13, 2) ^ 2]) << 13) | bitfield(address, 0, 13));
 }
@@ -627,10 +658,10 @@ u8 k051649_core::read(u16 address)
 u8 k052539_core::read(u16 address)
 {
 	if ((bitfield(address, 11, 5) == 0b10011) && m_scc_enable && (!m_is_sccplus))
-		return scc_r(u8(address));
+		return scc_r(false, u8(address));
 
 	if ((bitfield(address, 11, 5) == 0b10111) && m_scc_enable && m_is_sccplus)
-		return scc_r(u8(address));
+		return scc_r(true, u8(address));
 
 	return m_intf.read_byte((u32(m_mapper.bank[bitfield(address, 13, 2) ^ 2]) << 13) | bitfield(address, 0, 13));
 }
@@ -649,7 +680,7 @@ void k051649_core::write(u16 address, u8 data)
 			break;
 		case 0b10011: // 0x9800-9fff SCC
 			if (m_scc_enable)
-				scc_w(u8(address), data);
+				scc_w(false, u8(address), data);
 			break;
 	}
 }
@@ -677,7 +708,7 @@ void k052539_core::write(u16 address, u8 data)
 			break;
 		case 0b10011: // 0x9800-0x9fff SCC
 			if ((!ram_enable) && m_scc_enable && (!m_is_sccplus))
-				scc_w(u8(address), data);
+				scc_w(false, u8(address), data);
 			break;
 		case 0b10111: // 0xb800-0xbfff SCC+, Mapper configuration
 			if (bitfield(address, 1, 10) == 0x3ff)
@@ -691,7 +722,7 @@ void k052539_core::write(u16 address, u8 data)
 				update = prev ^ m_is_sccplus;
 			}
 			else if ((!ram_enable) && m_scc_enable && m_is_sccplus)
-				scc_w(u8(address), data);
+				scc_w(true, u8(address), data);
 			break;
 	}
 	if (update)
