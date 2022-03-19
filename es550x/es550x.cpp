@@ -4,6 +4,43 @@
 
 	Copyright holder(s): cam900
 	Ensoniq ES5504/ES5505/ES5506 emulation core
+
+	After ES5503 DOC's appeared, Ensoniq announces ES5504 DOC II, ES5505 OTIS, ES5506 OTTO.
+
+	These are not just PCM chip; but with built-in 4 pole filters and variable voice limits.
+
+	It can be trades higher sample rate and finer frequency and Tons of voices, or vice-versa.
+
+	These are mainly used with their synthesizers, musical stuffs. It's also mainly paired with ES5510 ESP/ES5511 ESP2 for post processing.
+	ES5506 can be paired with itself, It's called Dual chip configuration and Both chips are can be shares same memory spaces.
+
+	ES5505 was also mainly used on Taito's early- to late-90s arcade hardware for their PCM sample based sound system,
+	paired with ES5510 ESP for post processing. It's configuration is borrowed from Ensoniq's 32 Voice synths powered by these chips.
+	It's difference is external logic to adds per-voice bankswitching looks like what Konami doing on K007232.
+
+	Atari Panther was will be use ES5505, but finally canceled.
+
+	Ensoniq's ISA Sound Card for PC, Soundscape used ES5506, "Elite" model has optional daughterboard with ES5510 for digital effects.
+
+	Related chips:
+	ES5530 "OPUS" variant is 2-in-one chip with built-in ES5506 and Sequoia.
+	ES5540 "OTTOFX" variant is ES5506 and ES5510 merged in single package.
+	ES5548 "OTTO48" variant is used at late-90s ensoniq synths and musical instruments, 2 ES5506s are merged in single package, or with 48 voices in chip?
+
+	Chip difference:
+	ES5504 to ES5505:
+	ADC and DAC is completely redesigned. it's has now voice-independent 10 bit and Sony/Burr-Brown format DAC.
+	Output channel and Volume is changed to 16 mono to 4 stereo, 12 bit Analog to 8 bit Stereo digital, also Floating point-ish format and independent per left and right output.
+	Channel 3 is can be Input/Output.
+	Max sample memory is expanded to 2MWords (1MWords * 2 Banks)
+
+	ES5505 to ES5506:
+	Output channel and Volume is changed to 4 stereo to 6 stereo, 8 bit to 16 bit, but only 12 bit is used for calculation; 4 LSB is used for envelope.
+	Hardware envelope is added - K1, K2, Volume value is can be modified in run-time.
+	All channels are output, Serial output is now partially programmable.
+	Max sample memory is expanded to 8MWords (2MWords * 4 Banks)
+
+	Register format between these chips are incompatible.
 */
 
 #include "es550x.hpp"
@@ -171,7 +208,7 @@ void es5504_core::voice_t::tick(u8 voice)
 		m_filter.tick(m_alu.interpolation(sample, sample2, 9));
 
 		// Send to output
-		m_ch = (m_filter.m_o4_1 * m_volume) >> 12;
+		m_ch = (m_filter.m_o4_1 * m_volume) >> 12; // Analog multiplied in real chip
 
 		// ALU execute
 		if (m_alu.tick(29))
@@ -279,12 +316,12 @@ void es5506_core::tick()
 	if ((!m_mode.bclk_en) && (!m_mode.wclk_en) && (!m_mode.lrclk_en) && (m_w_end > m_w_st))
 	{
 		const int data_bit = std::min<int>(20, std::min<int>((m_w_end - m_w_st), m_lr_end)); // only 20 bits are transferred
-		if (data_bit < 23)
+		if (data_bit < 20)
 		{
 			for (u8 i = 0; i < 6; i++)
 			{
-				m_output[i].m_left = m_ch[i].m_left >> (23 - data_bit);
-				m_output[i].m_right = m_ch[i].m_right >> (23 - data_bit);
+				m_output[i].m_left = m_ch[i].m_left >> (20 - data_bit);
+				m_output[i].m_right = m_ch[i].m_right >> (20 - data_bit);
 			}
 		}
 		else
