@@ -29,18 +29,24 @@
 
 	Chip difference:
 	ES5504 to ES5505:
+	Total voice amount is expanded to 32, rather than 25.
 	ADC and DAC is completely redesigned. it's has now voice-independent 10 bit and Sony/Burr-Brown format DAC.
 	Output channel and Volume is changed to 16 mono to 4 stereo, 12 bit Analog to 8 bit Stereo digital, also Floating point-ish format and independent per left and right output.
 	Channel 3 is can be Input/Output.
+	Channel output is can be accessible at host for test purpose.
 	Max sample memory is expanded to 2MWords (1MWords * 2 Banks)
 
 	ES5505 to ES5506:
-	Output channel and Volume is changed to 4 stereo to 6 stereo, 8 bit to 16 bit, but only 12 bit is used for calculation; 4 LSB is used for envelope.
-	Hardware envelope is added - K1, K2, Volume value is can be modified in run-time.
+	Frequency is more finer now: 11 bit fraction rather than 9 bit.
+	Output channel and Volume is changed to 4 stereo to 6 stereo, 8 bit to 16 bit, but only 12 bit is used for calculation; 4 LSB is used for envelope ramping.
+	Transwave flag is added - its helpful for transwave process, with interrupt per voices.
+	Hardware envelope is added - K1, K2, Volume value is can be modified in run-time. also K1, K2 is expanded to 16 bit for finer envelope ramping.
+	Filter calculation resolution is expanded to 18 bit.
 	All channels are output, Serial output is now partially programmable.
 	Max sample memory is expanded to 8MWords (2MWords * 4 Banks)
 
 	Register format between these chips are incompatible.
+
 */
 
 #include "es550x.hpp"
@@ -481,22 +487,22 @@ u16 es5504_core::read(u8 address, bool cpu_access = false)
 			{
 				switch (address)
 				{
-					case 1: // O4(n-1) Filter 4 Temp Register
+					case 1: // O4(n-1) (Filter 4 Temp Register)
 						ret = v.m_filter.m_o4_1;
 						break;
-					case 2: // O3(n-2) Filter 3 Temp Register #2
+					case 2: // O3(n-2) (Filter 3 Temp Register #2)
 						ret = v.m_filter.m_o3_2;
 						break;
-					case 3: // O3(n-1) Filter 3 Temp Register #1
+					case 3: // O3(n-1) (Filter 3 Temp Register #1)
 						ret = v.m_filter.m_o3_1;
 						break;
-					case 4: // O2(n-2) Filter 2 Temp Register #2
+					case 4: // O2(n-2) (Filter 2 Temp Register #2)
 						ret = v.m_filter.m_o2_2;
 						break;
-					case 5: // O2(n-1) Filter 2 Temp Register #1
+					case 5: // O2(n-1) (Filter 2 Temp Register #1)
 						ret = v.m_filter.m_o2_1;
 						break;
-					case 6: // O1(n-1) Filter 1 Temp Register
+					case 6: // O1(n-1) (Filter 1 Temp Register)
 						ret = v.m_filter.m_o1_1;
 						break;
 				}
@@ -596,22 +602,22 @@ void es5504_core::write(u8 address, u16 data, bool cpu_access = false)
 			{
 				switch (address)
 				{
-					case 1: // O4(n-1) Filter 4 Temp Register
+					case 1: // O4(n-1) (Filter 4 Temp Register)
 						v.m_filter.m_o4_1 = sign_ext<s32>(data, 16);
 						break;
-					case 2: // O3(n-2) Filter 3 Temp Register #2
+					case 2: // O3(n-2) (Filter 3 Temp Register #2)
 						v.m_filter.m_o3_2 = sign_ext<s32>(data, 16);
 						break;
-					case 3: // O3(n-1) Filter 3 Temp Register #1
+					case 3: // O3(n-1) (Filter 3 Temp Register #1)
 						v.m_filter.m_o3_1 = sign_ext<s32>(data, 16);
 						break;
-					case 4: // O2(n-2) Filter 2 Temp Register #2
+					case 4: // O2(n-2) (Filter 2 Temp Register #2)
 						v.m_filter.m_o2_2 = sign_ext<s32>(data, 16);
 						break;
-					case 5: // O2(n-1) Filter 2 Temp Register #1
+					case 5: // O2(n-1) (Filter 2 Temp Register #1)
 						v.m_filter.m_o2_1 = sign_ext<s32>(data, 16);
 						break;
-					case 6: // O1(n-1) Filter 1 Temp Register
+					case 6: // O1(n-1) (Filter 1 Temp Register)
 						v.m_filter.m_o1_1 = sign_ext<s32>(data, 16);
 						break;
 				}
@@ -743,22 +749,22 @@ u16 es5505_core::read(u8 address, bool cpu_access = false)
 			{
 				switch (address)
 				{
-					case 1: // O4(n-1) Filter 4 Temp Register
+					case 1: // O4(n-1) (Filter 4 Temp Register)
 						ret = v.m_filter.m_o4_1;
 						break;
-					case 2: // O3(n-2) Filter 3 Temp Register #2
+					case 2: // O3(n-2) (Filter 3 Temp Register #2)
 						ret = v.m_filter.m_o3_2;
 						break;
-					case 3: // O3(n-1) Filter 3 Temp Register #1
+					case 3: // O3(n-1) (Filter 3 Temp Register #1)
 						ret = v.m_filter.m_o3_1;
 						break;
-					case 4: // O2(n-2) Filter 2 Temp Register #2
+					case 4: // O2(n-2) (Filter 2 Temp Register #2)
 						ret = v.m_filter.m_o2_2;
 						break;
-					case 5: // O2(n-1) Filter 2 Temp Register #1
+					case 5: // O2(n-1) (Filter 2 Temp Register #1)
 						ret = v.m_filter.m_o2_1;
 						break;
-					case 6: // O1(n-1) Filter 1 Temp Register
+					case 6: // O1(n-1) (Filter 1 Temp Register)
 						ret = v.m_filter.m_o1_1;
 						break;
 				}
@@ -897,22 +903,22 @@ void es5505_core::write(u8 address, u16 data, bool cpu_access = false)
 			{
 				switch (address)
 				{
-					case 1: // O4(n-1) Filter 4 Temp Register
+					case 1: // O4(n-1) (Filter 4 Temp Register)
 						v.m_filter.m_o4_1 = sign_ext<s32>(data, 16);
 						break;
-					case 2: // O3(n-2) Filter 3 Temp Register #2
+					case 2: // O3(n-2) (Filter 3 Temp Register #2)
 						v.m_filter.m_o3_2 = sign_ext<s32>(data, 16);
 						break;
-					case 3: // O3(n-1) Filter 3 Temp Register #1
+					case 3: // O3(n-1) (Filter 3 Temp Register #1)
 						v.m_filter.m_o3_1 = sign_ext<s32>(data, 16);
 						break;
-					case 4: // O2(n-2) Filter 2 Temp Register #2
+					case 4: // O2(n-2) (Filter 2 Temp Register #2)
 						v.m_filter.m_o2_2 = sign_ext<s32>(data, 16);
 						break;
-					case 5: // O2(n-1) Filter 2 Temp Register #1
+					case 5: // O2(n-1) (Filter 2 Temp Register #1)
 						v.m_filter.m_o2_1 = sign_ext<s32>(data, 16);
 						break;
-					case 6: // O1(n-1) Filter 1 Temp Register
+					case 6: // O1(n-1) (Filter 1 Temp Register)
 						v.m_filter.m_o1_1 = sign_ext<s32>(data, 16);
 						break;
 				}
@@ -977,7 +983,7 @@ u8 es5506_core::read(u8 address, bool cpu_access = false)
 {
 	const u8 byte = bitfield(address, 0, 2); // byte select
 	const u8 shift = 24 - (byte << 3);
-	if (byte != 0) // Return already latched register if byte address != 0
+	if (byte != 0) // Return already latched register if not highest byte is accessing
 		return bitfield(m_read_latch, shift, 8);
 
 	address = bitfield(address, 2, 4); // 4 bit address for CPU access
@@ -1038,7 +1044,7 @@ u8 es5506_core::read(u8 address, bool cpu_access = false)
 			{
 				switch (address)
 				{
-					case 0: // CR Control Register
+					case 0: // CR (Control Register)
 						m_read_latch = (m_read_latch & ~0xffff) | 
 						          (v.m_alu.m_cr.stop0 ? 0x0001 : 0x0000)
 										| (v.m_alu.m_cr.stop1 ? 0x0002 : 0x0000)
@@ -1053,58 +1059,58 @@ u8 es5506_core::read(u8 address, bool cpu_access = false)
 										| (v.m_cr.cmpd        ? 0x2000 : 0x0000)
 										| (bitfield(v.m_cr.bs, 0, 2) << 14);
 						break;
-					case 1: // START Loop Start Register
+					case 1: // START (Loop Start Register)
 						m_read_latch = (m_read_latch & ~0xfffff800) | (v.m_alu.m_start & 0xfffff800);
 						break;
-					case 2: // END Loop End Register
+					case 2: // END (Loop End Register)
 						m_read_latch = (m_read_latch & ~0xffffff80) | (v.m_alu.m_end & 0xffffff80);
 						break;
-					case 3: // ACCUM Accumulator Register
+					case 3: // ACCUM (Accumulator Register)
 						m_read_latch = v.m_alu.m_accum;
 						break;
-					case 4: // O4(n-1) Filter 4 Temp Register
+					case 4: // O4(n-1) (Filter 4 Temp Register)
 						if (cpu_access)
 							m_read_latch = (m_read_latch & ~0x3ffff) | bitfield(v.m_filter.m_o4_1, 0, 18);
 						else
 							m_read_latch = v.m_filter.m_o4_1;
 						break;
-					case 5: // O3(n-2) Filter 3 Temp Register #2
+					case 5: // O3(n-2) (Filter 3 Temp Register #2)
 						if (cpu_access)
 							m_read_latch = (m_read_latch & ~0x3ffff) | bitfield(v.m_filter.m_o3_2, 0, 18);
 						else
 							m_read_latch = v.m_filter.m_o3_2;
 						break;
-					case 6: // O3(n-1) Filter 3 Temp Register #1
+					case 6: // O3(n-1) (Filter 3 Temp Register #1)
 						if (cpu_access)
 							m_read_latch = (m_read_latch & ~0x3ffff) | bitfield(v.m_filter.m_o3_1, 0, 18);
 						else
 							m_read_latch = v.m_filter.m_o3_1;
 						break;
-					case 7: // O2(n-2) Filter 2 Temp Register #2
+					case 7: // O2(n-2) (Filter 2 Temp Register #2)
 						if (cpu_access)
 							m_read_latch = (m_read_latch & ~0x3ffff) | bitfield(v.m_filter.m_o2_2, 0, 18);
 						else
 							m_read_latch = v.m_filter.m_o2_2;
 						break;
-					case 8: // O2(n-1) Filter 2 Temp Register #1
+					case 8: // O2(n-1) (Filter 2 Temp Register #1)
 						if (cpu_access)
 							m_read_latch = (m_read_latch & ~0x3ffff) | bitfield(v.m_filter.m_o2_1, 0, 18);
 						else
 							m_read_latch = v.m_filter.m_o2_1;
 						break;
-					case 9: // O1(n-1) Filter 1 Temp Register
+					case 9: // O1(n-1) (Filter 1 Temp Register)
 						if (cpu_access)
 							m_read_latch = (m_read_latch & ~0x3ffff) | bitfield(v.m_filter.m_o1_1, 0, 18);
 						else
 							m_read_latch = v.m_filter.m_o1_1;
 						break;
-					case 10: // W_ST Word Clock Start Register
+					case 10: // W_ST (Word Clock Start Register)
 						m_read_latch = (m_read_latch & ~0x7f) | bitfield(m_w_st, 0, 7);
 						break;
-					case 11: // W_END Word Clock End Register
+					case 11: // W_END (Word Clock End Register)
 						m_read_latch = (m_read_latch & ~0x7f) | bitfield(m_w_end, 0, 7);
 						break;
-					case 12: // LR_END Left/Right Clock End Register
+					case 12: // LR_END (Left/Right Clock End Register)
 						m_read_latch = (m_read_latch & ~0x7f) | bitfield(m_lr_end, 0, 7);
 						break;
 				}
@@ -1186,7 +1192,7 @@ void es5506_core::write(u8 address, u8 data, bool cpu_access = false)
 	// Update register latch
 	m_write_latch = (m_write_latch & ~(0xff << shift)) | (u32(data) << shift);
 
-	if (byte != 3) // Wait until LSB is writed
+	if (byte != 3) // Wait until lowest byte is writed
 		return;
 
 	if (address >= 13) // Global registers
@@ -1236,7 +1242,7 @@ void es5506_core::write(u8 address, u8 data, bool cpu_access = false)
 			{
 				switch (address)
 				{
-					case 0: // CR Control Register
+					case 0: // CR (Control Register)
 						v.m_alu.m_cr.stop0 = bitfield(m_write_latch, 0);
 						v.m_alu.m_cr.stop1 = bitfield(m_write_latch, 1);
 						v.m_alu.m_cr.lei   = bitfield(m_write_latch, 2);
@@ -1250,40 +1256,40 @@ void es5506_core::write(u8 address, u8 data, bool cpu_access = false)
 						v.m_cr.cmpd        = bitfield(m_write_latch, 13);
 						v.m_cr.bs          = bitfield(m_write_latch, 14, 2);
 						break;
-					case 1: // START Loop Start Register
+					case 1: // START (Loop Start Register)
 						v.m_alu.m_start = m_write_latch & 0xfffff800;
 						break;
-					case 2: // END Loop End Register
+					case 2: // END (Loop End Register)
 						v.m_alu.m_end = m_write_latch & 0xffffff80;
 						break;
-					case 3: // ACCUM Accumulator Register
+					case 3: // ACCUM (Accumulator Register)
 						v.m_alu.m_accum = m_write_latch;
 						break;
-					case 4: // O4(n-1) Filter 4 Temp Register
+					case 4: // O4(n-1) (Filter 4 Temp Register)
 						v.m_filter.m_o4_1 = sign_ext<s32>(bitfield(m_write_latch, 0, 18), 18);
 						break;
-					case 5: // O3(n-2) Filter 3 Temp Register #2
+					case 5: // O3(n-2) (Filter 3 Temp Register #2)
 						v.m_filter.m_o3_2 = sign_ext<s32>(bitfield(m_write_latch, 0, 18), 18);
 						break;
-					case 6: // O3(n-1) Filter 3 Temp Register #1
+					case 6: // O3(n-1) (Filter 3 Temp Register #1)
 						v.m_filter.m_o3_1 = sign_ext<s32>(bitfield(m_write_latch, 0, 18), 18);
 						break;
-					case 7: // O2(n-2) Filter 2 Temp Register #2
+					case 7: // O2(n-2) (Filter 2 Temp Register #2)
 						v.m_filter.m_o2_2 = sign_ext<s32>(bitfield(m_write_latch, 0, 18), 18);
 						break;
-					case 8: // O2(n-1) Filter 2 Temp Register #1
+					case 8: // O2(n-1) (Filter 2 Temp Register #1)
 						v.m_filter.m_o2_1 = sign_ext<s32>(bitfield(m_write_latch, 0, 18), 18);
 						break;
-					case 9: // O1(n-1) Filter 1 Temp Register
+					case 9: // O1(n-1) (Filter 1 Temp Register)
 						v.m_filter.m_o1_1 = sign_ext<s32>(bitfield(m_write_latch, 0, 18), 18);
 						break;
-					case 10: // W_ST Word Clock Start Register
+					case 10: // W_ST (Word Clock Start Register)
 						m_w_st = bitfield(m_write_latch, 0, 7);
 						break;
-					case 11: // W_END Word Clock End Register
+					case 11: // W_END (Word Clock End Register)
 						m_w_end = bitfield(m_write_latch, 0, 7);
 						break;
-					case 12: // LR_END Left/Right Clock End Register
+					case 12: // LR_END (Left/Right Clock End Register)
 						m_lr_end = bitfield(m_write_latch, 0, 7);
 						break;
 				}
