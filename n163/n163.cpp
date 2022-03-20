@@ -49,9 +49,10 @@
 	48-4f Channel 6 (Optional if activated)
 	40-47 Channel 7 (Optional if activated)
 
-	Rest of RAM area are for 4 bit Waveform and scratchpad.
-	        ---- xxxx 4 bit waveform, LSB first
-					xxxx ---- Same as above, MSB next
+	Rest of RAM area are for 4 bit Waveform and/or scratchpad.
+	Each waveform byte has 2 nibbles packed, fetches LSB first, MSB next.
+	        ---- xxxx 4 bit waveform, LSB
+	        xxxx ---- Same as above, MSB
 
 	Waveform address: Waveform base offset + Bit 16 to 23 of Accumulator, 1 LSB of result is nibble select, 7 MSB of result is Byte address in RAM.
 
