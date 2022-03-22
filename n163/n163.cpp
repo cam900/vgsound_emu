@@ -65,7 +65,7 @@
 void n163_core::tick()
 {
 	m_out = 0;
-	// 0xe000-0xe7ff Disable sound bits (bit 6, remains are CPU ROM Bank 0x8000-0x9fff select.)
+	// 0xe000-0xe7ff Disable sound bits (bit 6, bit 0 to 5 are CPU ROM Bank 0x8000-0x9fff select.)
 	if (m_disable)
 		return;
 

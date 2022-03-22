@@ -32,6 +32,9 @@ public:
 	// sound output pin
 	s16 out() { return m_out; }
 
+	// register pool
+	u8 reg(u8 addr) { return m_ram[addr & 0x7f]; }
+
 private:
 	// Address latch
 	struct addr_latch_t
