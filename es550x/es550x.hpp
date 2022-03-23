@@ -24,7 +24,7 @@ public:
 	virtual void irqb(bool state) {} // IRQB output
 	virtual u16 adc_r() { return 0; } // ADC input
 	virtual void adc_w(u16 data) {} // ADC output
-	virtual u16 read_sample(u8 voice, u8 bank, u32 address) { return 0; }
+	virtual s16 read_sample(u8 voice, u8 bank, u32 address) { return 0; }
 };
 
 // Shared functions for ES5504/ES5505/ES5506
@@ -452,10 +452,11 @@ private:
 		// Compressed format
 		s32 decompress(s32 sample)
 		{
-			u8 exponent = bitfield(sample, 13, 3);
-			u8 mantissa = bitfield(sample, 8, 5);
-			sample = ((mantissa & 0x10) ? (exponent ? 0 : (0x0100 << (exponent - 1))) : (0xff00 << exponent)) | ((mantissa & 0xf) << (4 + std::max(0, exponent - 1)));
-			sample = sign_ext<s32>(sample, 16); // sign extended
+			u8 exponent = bitfield(sample, 5, 3);
+			u8 mantissa = bitfield(sample, 0, 5);
+			return (exponent > 0) ?
+			        s32(s16(((bitfield(mantissa, 0, 5) ? 0x10 : ~0x1f) | bitfield(mantissa, 0, 4)) << (4 + (exponent - 1)))) :
+			        (sign_ext<s32>(mantissa, 5) << 4);
 		}
 
 		// volume calculation

@@ -383,6 +383,13 @@ void es5506_core::voice_t::tick(u8 voice)
 		s32 sample = m_host.m_intf.read_sample(voice, m_cr.bs, addr++);
 		s32 sample2 = m_host.m_intf.read_sample(voice, m_cr.bs, bitfield(addr, 0, 21));
 
+		// Decompress (Upper 8 bit is used for compressed format)
+		if (m_cr.cmpd)
+		{
+			sample = decompress(bitfield(sample, 8, 8));
+			sample2 = decompress(bitfield(sample2, 8, 8));
+		}
+
 		// Filter execute
 		m_filter.tick(m_alu.interpolation(sample, sample2, 11));
 
