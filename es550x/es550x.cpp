@@ -214,7 +214,7 @@ void es5504_core::voice_t::tick(u8 voice)
 		m_filter.tick(m_alu.interpolation(sample, sample2, 9));
 
 		// Send to output
-		m_ch = (m_filter.m_o4_1 * m_volume) >> 12; // Analog multiplied in real chip
+		m_ch = (sign_ext<s32>(m_filter.m_o4_1, 13) * m_volume) >> 12; // Analog multiplied in real chip
 
 		// ALU execute
 		if (m_alu.tick(29))
@@ -288,8 +288,8 @@ void es5505_core::voice_t::tick(u8 voice)
 		m_filter.tick(m_alu.interpolation(sample, sample2, 9));
 
 		// Send to output
-		m_ch.m_left = volume_calc(m_lvol, m_filter.m_o4_1);
-		m_ch.m_right = volume_calc(m_rvol, m_filter.m_o4_1);
+		m_ch.m_left = volume_calc(m_lvol, sign_ext<s32>(m_filter.m_o4_1, 16));
+		m_ch.m_right = volume_calc(m_rvol, sign_ext<s32>(m_filter.m_o4_1, 16));
 
 		// ALU execute
 		if (m_alu.tick(29))
@@ -387,8 +387,8 @@ void es5506_core::voice_t::tick(u8 voice)
 		m_filter.tick(m_alu.interpolation(sample, sample2, 11));
 
 		// Send to output
-		m_ch.m_left = volume_calc(m_filter.m_o4_1, m_lvol);
-		m_ch.m_right = volume_calc(m_filter.m_o4_1, m_rvol);
+		m_ch.m_left = volume_calc(sign_ext<s32>(m_filter.m_o4_1, 18), m_lvol);
+		m_ch.m_right = volume_calc(sign_ext<s32>(m_filter.m_o4_1, 18), m_rvol);
 
 		// ALU execute
 		if (m_alu.tick(32))

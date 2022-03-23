@@ -9,6 +9,7 @@
 	It's architecture is successed from K007232, but it features various enhancements:
 	it's expanded to 4 channels, Supports more memory space, 4 bit ADPCM, Built in volume and stereo panning support,
 	and Dual chip configurations.
+	There's 2 stereo inputs and single stereo output, Both format is YM3012 compatible.
 
 	Register layout (Read/Write)
 
@@ -79,8 +80,8 @@
 
 	2e      xxxx xxxx R   ROM readback (use Voice 0 register)
 
-	2f      ---- x---   W Dual chip configuration related?
-	        ---- -x--   W YM3012 input related?
+	2f      ---- x---   W AUX2 input enable
+	        ---- -x--   W AUX1 input enable
 	        ---- --x-   W Sound enable
 	        ---- ---x   W ROM readbank enable
 
@@ -104,10 +105,15 @@ void k053260_core::tick()
 			m_out[1] += m_voice[i].out[1];
 		}
 	}
-	// timer clock
-	if (bitfield(++m_timer.clock, 0, 4) == 0)
+	// dac clock (YM3012 format)
+	if (bitfield(++m_dac.clock, 0, 4) == 0)
 	{
-		m_intf.write_int(m_timer.state++);
+		m_intf.write_int(m_dac.state);
+		if (bitfield(++m_dac.state, 0) == 0)
+		{
+			m_ym3012.m_out[bitfield(m_dac.state, 1)] = m_ym3012.m_in[bitfield(m_dac.state, 1)];
+			m_ym3012.m_in[bitfield(m_dac.state, 1) ^ 1] = m_out[bitfield(m_dac.state, 1) ^ 1];
+		}
 	}
 }
 
@@ -296,7 +302,7 @@ void k053260_core::reset()
 	std::fill(std::begin(m_host2snd), std::end(m_host2snd), 0);
 	std::fill(std::begin(m_snd2host), std::end(m_snd2host), 0);
 	m_ctrl.reset();
-	m_timer.reset();
+	m_dac.reset();
 
 	std::fill(std::begin(m_reg), std::end(m_reg), 0);
 	std::fill(std::begin(m_out), std::end(m_out), 0);

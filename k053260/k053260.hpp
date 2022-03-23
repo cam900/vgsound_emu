@@ -113,9 +113,21 @@ private:
 	};
 	ctrl_t m_ctrl;      // chip control
 
-	struct timer_t
+	struct ym3012_t
 	{
-		timer_t()
+		void reset()
+		{
+			std::fill(std::begin(m_in), std::end(m_in), 0);
+			std::fill(std::begin(m_out), std::end(m_out), 0);
+		}
+
+		s32 m_in[2] = {0};
+		s32 m_out[2] = {0};
+	};
+
+	struct dac_t
+	{
+		dac_t()
 			: clock(0)
 			, state(0)
 		{};
@@ -126,10 +138,11 @@ private:
 			state = 0;
 		}
 
-		u8 clock : 4; // timer clock (16 clock)
-		u8 state : 2; // timer state (4 state)
+		u8 clock : 4; // DAC clock (16 clock)
+		u8 state : 2; // DAC state (4 state - SAM1, SAM2)
 	};
-	timer_t m_timer;
+	ym3012_t m_ym3012;
+	dac_t m_dac;
 
 	k053260_intf &m_intf; // common memory interface
 
