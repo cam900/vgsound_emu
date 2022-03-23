@@ -450,13 +450,13 @@ private:
 
 		// accessors, getters, setters
 		// Compressed format
-		s32 decompress(s32 sample)
+		s16 decompress(u8 sample)
 		{
 			u8 exponent = bitfield(sample, 5, 3);
 			u8 mantissa = bitfield(sample, 0, 5);
 			return (exponent > 0) ?
-			        s32(s16(((bitfield(mantissa, 0, 5) ? 0x10 : ~0x1f) | bitfield(mantissa, 0, 4)) << (4 + (exponent - 1)))) :
-			        (sign_ext<s32>(mantissa, 5) << 4);
+			        s16(((bitfield(mantissa, 4) ? 0x10 : ~0x1f) | bitfield(mantissa, 0, 4)) << (4 + (exponent - 1))) :
+			        s16(((bitfield(mantissa, 4) ? ~0xf : 0) | bitfield(mantissa, 0, 4)) << 4);
 		}
 
 		// volume calculation
