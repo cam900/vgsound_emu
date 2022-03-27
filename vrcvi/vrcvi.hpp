@@ -17,18 +17,28 @@
 
 #pragma once
 
+class vrcvi_intf
+{
+public:
+	virtual void irq_w(bool irq) { }
+};
+
 class vrcvi_core
 {
 public:
+	friend class vrcvi_intf;
 	// constructor
-	vrcvi_core()
+	vrcvi_core(vrcvi_intf &intf)
 		: m_pulse{*this,*this}
 		, m_sawtooth(*this)
+		, m_timer(*this)
+		, m_intf(intf)
 	{
 	}
 	// accessors, getters, setters
 	void pulse_w(u8 voice, u8 address, u8 data);
 	void saw_w(u8 address, u8 data);
+	void timer_w(u8 address, u8 data);
 	void control_w(u8 address, u8 data);
 
 	// internal state
@@ -108,8 +118,6 @@ private:
 		pulse_control_t m_control;
 	};
 
-	pulse_t m_pulse[2];
-
 	// 1 Sawtooth channel
 	struct sawtooth_t : alu_t
 	{
@@ -124,7 +132,71 @@ private:
 		u8 m_accum = 0; // sawtooth accumulator, high 5 bit is accumulated to output
 	};
 
-	sawtooth_t m_sawtooth;
+	// Internal timer
+	struct timer_t
+	{
+		timer_t(vrcvi_core &host)
+			: m_host(host)
+		{ };
+
+		void reset()
+		{
+			m_timer_control.reset();
+			m_prescaler = 341;
+			m_counter = m_counter_latch = 0;
+		}
+		bool tick();
+		void counter_tick();
+
+		// IRQ update
+		void update() { m_host.m_intf.irq_w(m_timer_control.m_irq_trigger); }
+		void irq_set()
+		{
+			if (!m_timer_control.m_irq_trigger)
+			{
+				m_timer_control.m_irq_trigger = 1;
+				update();
+			}
+		}
+		void irq_clear()
+		{
+			if (m_timer_control.m_irq_trigger)
+			{
+				m_timer_control.m_irq_trigger = 0;
+				update();
+			}
+		}
+
+		// Control bits
+		struct timer_control_t
+		{
+			timer_control_t()
+				: m_irq_trigger(0)
+				, m_enable_ack(0)
+				, m_enable(0)
+				, m_sync(0)
+			{ };
+
+			void reset()
+			{
+				m_irq_trigger = 0;
+				m_enable_ack = 0;
+				m_enable = 0;
+				m_sync = 0;
+			}
+
+			u8 m_irq_trigger : 1;
+			u8 m_enable_ack : 1;
+			u8 m_enable : 1;
+			u8 m_sync : 1;
+		};
+
+		vrcvi_core &m_host;              // host core
+		timer_control_t m_timer_control; // timer control bits
+		s16 m_prescaler = 341;           // prescaler
+		u8 m_counter = 0;                // clock counter
+		u8 m_counter_latch = 0;          // clock counter latch
+	};
 
 	struct global_control_t
 	{
@@ -143,7 +215,12 @@ private:
 		u8 m_shift : 2; // 4/8 bit right shift
 	};
 
-	global_control_t m_control;
+	pulse_t m_pulse[2];         // 2 pulse channels
+	sawtooth_t m_sawtooth;      // sawtooth channel
+	timer_t m_timer;            // internal timer
+	global_control_t m_control; // control
+
+	vrcvi_intf &m_intf;
 
 	s8 m_out = 0; // 6 bit output
 };

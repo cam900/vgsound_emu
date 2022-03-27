@@ -23,7 +23,9 @@
 
 	The chip itself has 053328, 053329, 053330 Revision, but Its difference between revision is unknown.
 
-	Sound register layout (351951 PCB, 351949A swaps xxx1 and xxx2):
+	Like other mappers for NES, It has internal timer - Its timer can be sync with scanline like other Konami mapper in this era.
+
+	Register layout (Sound and Timer only; 351951 PCB case, 351949A swaps xxx1 and xxx2):
 
 	Address Bits      Description
 	        7654 3210
@@ -59,6 +61,14 @@
 	b002    x--- ---- Sawtooth Disable
 	        ---- xxxx Sawtooth Pitch bit 8-11
 
+	f000-f002 IRQ Timer
+
+	f000    xxxx xxxx IRQ Timer latch
+	f001    ---- -0-- Sync with scanline
+	        ---- --x- Enable timer
+	        ---- ---x Enable timer after IRQ Acknowledge
+	f002    ---- ---- IRQ Acknowledge
+
 	Frequency calculations:
 
 	if 4 bit Frequency Mode then
@@ -86,6 +96,8 @@ void vrcvi_core::tick()
 		if (m_sawtooth.tick())
 			m_out += bitfield(m_sawtooth.m_accum, 3, 5); // add 5 bit sawtooth output
 	}
+	if (m_timer.tick())
+		m_timer.counter_tick();
 }
 
 void vrcvi_core::reset()
@@ -94,6 +106,7 @@ void vrcvi_core::reset()
 		elem.reset();
 
 	m_sawtooth.reset();
+	m_timer.reset();
 	m_control.reset();
 	m_out = 0;
 }
@@ -178,6 +191,40 @@ void vrcvi_core::sawtooth_t::reset()
 	m_accum = 0;
 }
 
+bool vrcvi_core::timer_t::tick()
+{
+	if (m_timer_control.m_enable)
+	{
+		if (!m_timer_control.m_sync) // scanline sync mode
+		{
+			m_prescaler -= 3;
+			if (m_prescaler <= 0)
+			{
+				m_prescaler += 341;
+				return true;
+			}
+		}
+	}
+	return (m_timer_control.m_enable && m_timer_control.m_sync) ? true : false;
+}
+
+void vrcvi_core::timer_t::counter_tick()
+{
+	if (bitfield(++m_counter, 0, 8) == 0)
+	{
+		m_counter = m_counter_latch;
+		irq_set();
+	}
+}
+
+void vrcvi_core::timer_t::reset()
+{
+	m_timer_control.reset();
+	m_prescaler = 341;
+	m_counter = m_counter_latch = 0;
+	irq_clear();
+}
+
 // Accessors
 
 void vrcvi_core::alu_t::divider_t::write(bool msb, u8 data)
@@ -223,6 +270,31 @@ void vrcvi_core::saw_w(u8 address, u8 data)
 			break;
 		case 0x02: // Pitch MSB, Enable/Disable - 0xb002/0xb001 (Sawtooth)
 			m_sawtooth.m_divider.write(true, data);
+			break;
+	}
+}
+
+void vrcvi_core::timer_w(u8 address, u8 data)
+{
+	switch (address)
+	{
+		case 0x00: // Timer latch - 0xf000
+			m_timer.m_counter_latch = data;
+			break;
+		case 0x01: // Timer control - 0xf001/0xf002
+			m_timer.m_timer_control.m_sync = bitfield(data, 2);
+			m_timer.m_timer_control.m_enable = bitfield(data, 1);
+			m_timer.m_timer_control.m_enable_ack = bitfield(data, 0);
+			if (m_timer.m_timer_control.m_enable)
+			{
+				m_timer.m_counter = m_timer.m_counter_latch;
+				m_timer.m_prescaler = 341;
+			}
+			m_timer.irq_clear();
+			break;
+		case 0x02: // IRQ Acknowledge - 0xf002/0xf001
+			m_timer.irq_clear();
+			m_timer.m_timer_control.m_enable = m_timer.m_timer_control.m_enable_ack;
 			break;
 	}
 }
