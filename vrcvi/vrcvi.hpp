@@ -39,7 +39,7 @@ public:
 	void pulse_w(u8 voice, u8 address, u8 data);
 	void saw_w(u8 address, u8 data);
 	void timer_w(u8 address, u8 data);
-	void control_w(u8 address, u8 data);
+	void control_w(u8 data);
 
 	// internal state
 	void reset();
@@ -63,19 +63,19 @@ private:
 		{
 			divider_t()
 				: m_divider(0)
-				, m_disable(0)
+				, m_enable(0)
 			{ };
 
 			void reset()
 			{
 				m_divider = 0;
-				m_disable = 0;
+				m_enable = 0;
 			}
 
 			void write(bool msb, u8 data);
 
 			u16 m_divider : 12; // divider (pitch)
-			u16 m_disable : 1;  // channel disable flag
+			u16 m_enable  : 1;  // channel disable flag
 		};
 
 		vrcvi_core &m_host;
@@ -139,12 +139,7 @@ private:
 			: m_host(host)
 		{ };
 
-		void reset()
-		{
-			m_timer_control.reset();
-			m_prescaler = 341;
-			m_counter = m_counter_latch = 0;
-		}
+		void reset();
 		bool tick();
 		void counter_tick();
 
