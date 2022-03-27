@@ -7,6 +7,7 @@ Video game sound chip emulation cores. useful for emulators, chiptune trackers, 
 - k005289: Konami K005289, 2 Wavetable channels (or it's Timer/Address generators...?)
 - k007232: Konami K007232, 2 PCM channels
 - k053260: Konami K053260, 4 PCM or ADPCM channels with CPU to CPU communication feature
+- msm6295: OKI MSM6295, 4 ADPCM channels
 - n163: Namco 163, NES Mapper with up to 8 Wavetable channels
 - scc: Konami SCC, MSX Mappers with 5 Wavetable channels
 - vrcvi: Konami VRC VI, NES Mapper with 2 Pulse channels and 1 Sawtooth channel
