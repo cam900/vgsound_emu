@@ -268,12 +268,17 @@ public:
 	u16 read(u8 address, bool cpu_access = false);
 	void write(u8 address, u16 data, bool cpu_access = false);
 
+	u16 regs_r(u8 page, u8 address, bool cpu_access = false);
+	void regs_w(u8 page, u8 address, u16 data, bool cpu_access = false);
+
 	// internal state
 	void reset();
 	void tick();
 
 	// 16 output channels
 	s32 out(u8 ch) { return m_ch[ch & 0xf]; }
+
+	u16 regs_r(u8 page, u8 address) { u8 prev = m_page; m_page = page; u16 ret = read(address, false); m_page = prev; return ret; }
 
 protected:
 	virtual inline u8 max_voices() { return 25; }
@@ -319,6 +324,9 @@ public:
 	u16 read(u8 address, bool cpu_access = false);
 	void write(u8 address, u16 data, bool cpu_access = false);
 
+	u16 regs_r(u8 page, u8 address, bool cpu_access = false);
+	void regs_w(u8 page, u8 address, u16 data, bool cpu_access = false);
+
 	// internal state
 	void reset();
 	void tick();
@@ -330,6 +338,8 @@ public:
 	// 4 stereo output channels
 	s32 lout(u8 ch) { return m_ch[ch & 0x3].m_left; }
 	s32 rout(u8 ch) { return m_ch[ch & 0x3].m_right; }
+
+	u16 regs_r(u8 page, u8 address) { u8 prev = m_page; m_page = page; u16 ret = read(address, false); m_page = prev; return ret; }
 
 protected:
 	virtual inline u8 max_voices() { return 32; }
@@ -417,6 +427,9 @@ public:
 	u8 read(u8 address, bool cpu_access = false);
 	void write(u8 address, u8 data, bool cpu_access = false);
 
+	u32 regs_r(u8 page, u8 address, bool cpu_access = false);
+	void regs_w(u8 page, u8 address, u32 data, bool cpu_access = false);
+
 	// internal state
 	void reset();
 	void tick();
@@ -424,6 +437,8 @@ public:
 	// 6 stereo output channels
 	s32 lout(u8 ch) { return m_output[std::min<u8>(5, ch & 0x7)].m_left; }
 	s32 rout(u8 ch) { return m_output[std::min<u8>(5, ch & 0x7)].m_right; }
+
+	u8 regs_r(u8 page, u8 address) { u8 prev = m_page; m_page = page; u8 ret = read(address, false); m_page = prev; return ret; }
 
 private:
 	struct output_t

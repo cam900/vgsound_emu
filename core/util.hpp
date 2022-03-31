@@ -36,7 +36,7 @@ template<typename T> T bitfield(T in, u8 pos, u8 len = 1)
 // get sign extended value, sign_ext<type>(input, len)
 template<typename T> T sign_ext(T in, u8 len)
 {
-	len = std::max<u8>(0, (8 << sizeof(T)) - len);
+	len = std::max<u8>(0, (8 * sizeof(T)) - len);
 	return T(T(in) << len) >> len;
 }
 
