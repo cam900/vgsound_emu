@@ -59,4 +59,92 @@ public:
 	virtual void write_qword(u32 address, u64 data) { }
 };
 
+template<typename T, T InitWidth, u8 InitEdge = 0>
+struct clock_pulse_t
+{
+	void reset(T init = InitWidth)
+	{
+		m_edge.reset();
+		m_width = m_width_latch = m_counter = init;
+		m_cycle = 0;
+	}
+
+	bool tick(T width = InitWidth)
+	{
+		bool carry = ((--m_counter) <= 0);
+		if (carry)
+		{
+			m_width = width; // reset width
+			m_counter = m_width;
+			m_cycle = 0;
+		}
+		else
+			m_cycle++;
+
+		m_edge.tick(carry);
+		return carry;
+	}
+	bool tick() { tick(m_width_latch); }
+
+	void set_width(T width) { m_width = width; }
+	void set_width_latch(T width) { m_width_latch = width; }
+
+	// Accessors
+	bool current_edge() { return m_edge.m_current; }
+	bool rising_edge() { return m_edge.m_rising; }
+	bool falling_edge() { return m_edge.m_rising; }
+	bool cycle() { return m_cycle; }
+
+	struct edge_t
+	{
+		edge_t()
+			: m_current(InitEdge)
+			, m_previous(~InitEdge)
+			, m_rising(0)
+			, m_falling(0)
+			, m_changed(0)
+		{
+			m_changed = 1;
+			if (m_current == 1)
+				m_rising = 1;
+			else if (m_current == 0)
+				m_falling = 1;
+		}
+
+		void tick(bool toggle)
+		{
+			m_rising = m_falling = m_changed = 0;
+			if (toggle)
+			{
+				m_changed = 1;
+				m_current = ~m_current;
+				if (m_previous)
+					m_falling = 1;
+				else if (!m_previous)
+					m_rising = 1;
+			}
+			m_previous = current;
+		}
+
+		void reset()
+		{
+			m_previous = InitEdge;
+			m_current = ~InitEdge;
+			tick(true);
+		}
+
+		u8 m_current  : 1; // current edge
+		u8 m_previous : 1; // previous edge
+		u8 m_rising   : 1; // rising edge
+		u8 m_falling  : 1; // falling edge
+		u8 m_changed  : 1; // changed flag
+	};
+
+	edge_t m_edge;
+	T m_width       = InitWidth; // clock pulse width
+	T m_width_latch = InitWidth; // clock pulse width latch
+	T m_counter     = InitWidth; // clock counter
+	T m_cycle       = 0;         // clock cycle
+};
+
 #endif

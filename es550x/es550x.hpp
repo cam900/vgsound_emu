@@ -21,6 +21,11 @@
 class es550x_intf
 {
 public:
+	virtual void e(bool state) {}     // E output
+	virtual void bclk(bool state) {}  // BCLK output (serial specific)
+	virtual void lrclk(bool state) {} // LRCLK output (serial specific)
+	virtual void wclk(bool state) {}  // WCLK output (serial specific)
+
 	virtual void irqb(bool state) {} // IRQB output
 	virtual u16 adc_r() { return 0; } // ADC input
 	virtual void adc_w(u16 data) {} // ADC output
@@ -30,7 +35,7 @@ public:
 // Shared functions for ES5504/ES5505/ES5506
 class es550x_shared_core
 {
-	friend class es550x_intf; // es5506 specific memory interface
+	friend class es550x_intf; // es550x specific memory interface
 public:
 	// constructor
 	es550x_shared_core(es550x_intf &intf)
@@ -40,11 +45,17 @@ public:
 	// internal state
 	virtual void reset();
 
+	// clock outputs
+	bool e() { return m_e.current_edge(); }
+	bool e_rising_edge() { return m_e.rising_edge(); }
+	bool e_falling_edge() { return m_e.falling_edge(); }
+
 protected:
 	// Constants
-	virtual inline u8 max_voices() { return 32; }
+	virtual const inline u8 max_voices() = 0;
 
 	// Shared registers, functions
+	virtual void voice_tick() = 0; // voice tick
 
 	// Common control bits
 	struct es550x_control_t
@@ -73,56 +84,31 @@ protected:
 	};
 
 	// Accumulator
+	template<u8 Integer, u8 Fraction, bool Transwave>
 	struct es550x_alu_t
 	{
-		void reset()
-		{
-			m_cr.reset();
-			m_fc = 0;
-			m_start = 0;
-			m_end = 0;
-			m_accum = 0;
-		}
-
-		bool busy()
-		{
-			return ((!m_cr.stop0) && (!m_cr.stop1));
-		}
-
-		bool tick(u8 frac = 32)
-		{
-			if (m_cr.dir)
-			{
-				m_accum = bitfield(m_accum - m_fc, 0, frac);
-				return ((!m_cr.lei) && (m_accum < m_start)) ? true : false;
-			}
-			else
-			{
-				m_accum = bitfield(m_accum + m_fc, 0, frac);
-				return ((!m_cr.lei) && (m_accum > m_end)) ? true : false;
-			}
-		}
-
-		void loop_exec(bool transwave = false);
-
-		// SF = S1 + ACCfr * (S2 - S1)
-		s32 interpolation(s32 in, s32 next, u8 frac = 0)
-		{
-			return in + ((bitfield(m_accum, std::min<u8>(0, frac - 9), 9) * (next - in)) >> 9);
-		}
+		const u8 integer_bits = Integer;
+		const u8 fraction_bits = Fraction;
+		const u8 total_bits = Integer + Fraction;
+		void reset();
+		bool busy();
+		bool tick();
+		void loop_exec();
+		s32 interpolation();
+		u32 get_accum_integer();
 
 		struct es550x_alu_cr_t
 		{
 			es550x_alu_cr_t()
-			: stop0(0)
-			, stop1(0)
-			, lpe(0)
-			, ble(0)
-			, irqe(0)
-			, dir(0)
-			, irq(0)
-			, lei(0)
-		{ };
+				: stop0(0)
+				, stop1(0)
+				, lpe(0)
+				, ble(0)
+				, irqe(0)
+				, dir(0)
+				, irq(0)
+				, lei(0)
+			{ };
 
 			void reset()
 			{
@@ -147,10 +133,11 @@ protected:
 		};
 
 		es550x_alu_cr_t m_cr;
-		u32 m_fc = 0; // Frequency - 6 integer, 9 fraction for ES5506/ES5505, 6 integer, 11 fraction for ES5506
-		u32 m_start = 0; // Start register
-		u32 m_end = 0; // End register
-		u32 m_accum = 0; // Accumulator - 20 integer, 9 fraction for ES5506/ES5505, 21 integer, 11 fraction for ES5506
+		u32 m_fc        = 0;   // Frequency - 6 integer, 9 fraction for ES5506/ES5505, 6 integer, 11 fraction for ES5506
+		u32 m_start     = 0;   // Start register
+		u32 m_end       = 0;   // End register
+		u32 m_accum     = 0;   // Accumulator - 20 integer, 9 fraction for ES5506/ES5505, 21 integer, 11 fraction for ES5506
+		s32 m_sample[2] = {0}; // Samples
 	};
 
 	// Filter
@@ -158,35 +145,11 @@ protected:
 	{
 		void reset();
 		void tick(s32 in);
-
-		// Yn = K*(Xn - Yn-1) + Yn-1
-		s32 lp_exec(s32 coeff, s32 in, s32 prev_out)
-		{
-			return ((coeff * (in - prev_out)) / 4096) + prev_out;
-		}
-
-		// Yn = Xn - Xn-1 + K*Yn-1
-		s32 hp_exec(s32 coeff, s32 in, s32 prev_out, s32 prev_in)
-		{
-			return in - prev_in + ((coeff * prev_out) / 8192) * (prev_out / 2);
-		}
+		s32 lp_exec(s32 coeff, s32 in, s32 prev_out);
+		s32 hp_exec(s32 coeff, s32 in, s32 prev_out, s32 prev_in);
 
 		// Registers
-		struct lp_t
-		{
-			lp_t()
-				: lp(0)
-			{};
-
-			void reset()
-			{
-				lp = 0;
-			}
-
-			u8 lp : 2; // Filter mode
-		};
-	
-		lp_t m_lp;
+		u8 m_lp = 0; // Filter mode
 		// Filter coefficient registers
 		s32 m_k2 = 0; // Filter coefficient 2 - 12 bit for filter calculation, 4 LSBs are used for fine control of ramp increment for hardware envelope (ES5506)
 		s32 m_k1 = 0; // Filter coefficient 1
@@ -200,14 +163,16 @@ protected:
 	};
 
 	// Common voice struct
+	template<u8 Integer, u8 Fraction, bool Transwave>
 	struct es550x_voice_t
 	{
 		// internal state
 		virtual void reset();
-		virtual void tick(u8 voice);
+		virtual void fetch(u8 voice, u8 cycle) = 0;
+		virtual void tick(u8 voice) = 0;
 
 		es550x_control_t m_cr;
-		es550x_alu_t m_alu;
+		es550x_alu_t<Integer, Fraction, Transwave> m_alu;
 		es550x_filter_t m_filter;
 	};
 
@@ -240,314 +205,45 @@ protected:
 		u8 irqb : 1;
 	};
 
-	void irq_exec(es550x_voice_t &voice, u8 index);
+	template<u8 Integer, u8 Fraction, bool Transwave>
+	void irq_exec(es550x_voice_t<Integer, Fraction, Transwave> &voice, u8 index);
 	void irq_update() { m_intf.irqb(m_irqv.irqb ? false : true); }
 
-	u8 m_page = 0; // Page
-	es550x_irq_t m_irqv; // Voice interrupt vector registers
-	u8 m_active = 0x1f; // Activated voices (-1, ~25 for ES5504, ~32 for ES5505/ES5506)
-	u8 m_voice_cycle = 0; // Voice cycle
-	es550x_intf &m_intf; // es550x specific memory interface
-};
-
-// ES5504 specific
-class es5504_core : public es550x_shared_core
-{
-public:
-	// constructor
-	es5504_core(es550x_intf &intf)
-		: es550x_shared_core(intf)
-		, m_voice{*this,*this,*this,*this,*this,
-		          *this,*this,*this,*this,*this,
-		          *this,*this,*this,*this,*this,
-		          *this,*this,*this,*this,*this,
-		          *this,*this,*this,*this,*this}
+	// Host interfaces
+	struct host_interface_flag_t
 	{
-	}
-	// accessors, getters, setters
-	u16 read(u8 address, bool cpu_access = false);
-	void write(u8 address, u16 data, bool cpu_access = false);
-
-	u16 regs_r(u8 page, u8 address, bool cpu_access = false);
-	void regs_w(u8 page, u8 address, u16 data, bool cpu_access = false);
-
-	// internal state
-	void reset();
-	void tick();
-
-	// 16 output channels
-	s32 out(u8 ch) { return m_ch[ch & 0xf]; }
-
-	u16 regs_r(u8 page, u8 address) { u8 prev = m_page; m_page = page; u16 ret = read(address, false); m_page = prev; return ret; }
-
-protected:
-	virtual inline u8 max_voices() { return 25; }
-
-private:
-	// es5506 voice structs
-	struct voice_t : es550x_voice_t
-	{
-		// constructor
-		voice_t(es5504_core &host) : m_host(host) {}
-
-		// internal state
-		virtual void reset() override;
-		virtual void tick(u8 voice) override;
-
-		void adc_exec();
-
-		// registers
-		es5504_core &m_host;
-		u16 m_volume = 0; // 12 bit Volume
-		s32 m_ch = 0; // channel outputs
-	};
-
-	voice_t m_voice[25]; // 25 voices
-	u16 m_adc = 0; // ADC register
-	s32 m_ch[16] = {0}; // 16 channel outputs
-};
-
-// ES5504 specific
-class es5505_core : public es550x_shared_core
-{
-public:
-	// constructor
-	es5505_core(es550x_intf &intf)
-		: es550x_shared_core(intf)
-		, m_voice{*this,*this,*this,*this,*this,*this,*this,*this,
-		          *this,*this,*this,*this,*this,*this,*this,*this,
-		          *this,*this,*this,*this,*this,*this,*this,*this,
-		          *this,*this,*this,*this,*this,*this,*this,*this}
-	{
-	}
-	// accessors, getters, setters
-	u16 read(u8 address, bool cpu_access = false);
-	void write(u8 address, u16 data, bool cpu_access = false);
-
-	u16 regs_r(u8 page, u8 address, bool cpu_access = false);
-	void regs_w(u8 page, u8 address, u16 data, bool cpu_access = false);
-
-	// internal state
-	void reset();
-	void tick();
-
-	// Input mode for Channel 3
-	void lin(s32 in) { if (m_sermode.adc) { m_ch[3].m_left = in; } }
-	void rin(s32 in) { if (m_sermode.adc) { m_ch[3].m_right = in; } }
-
-	// 4 stereo output channels
-	s32 lout(u8 ch) { return m_ch[ch & 0x3].m_left; }
-	s32 rout(u8 ch) { return m_ch[ch & 0x3].m_right; }
-
-	u16 regs_r(u8 page, u8 address) { u8 prev = m_page; m_page = page; u16 ret = read(address, false); m_page = prev; return ret; }
-
-protected:
-	virtual inline u8 max_voices() { return 32; }
-
-private:
-	struct output_t
-	{
-		void reset()
-		{
-			m_left = 0;
-			m_right = 0;
-		};
-
-		s32 m_left = 0;
-		s32 m_right = 0;
-	};
-
-	// es5506 voice structs
-	struct voice_t : es550x_voice_t
-	{
-		// constructor
-		voice_t(es5505_core &host) : m_host(host) {}
-
-		// internal state
-		virtual void reset() override;
-		virtual void tick(u8 voice) override;
-
-		// volume calculation
-		s32 volume_calc(u8 volume, s32 in)
-		{
-			u8 exponent = bitfield(volume, 4, 4);
-			u8 mantissa = bitfield(volume, 0, 4);
-			return exponent ? (in * s32(0x10 | mantissa)) >> (19 - exponent) : 0;
-		}
-
-		// registers
-		es5505_core &m_host;
-		u8 m_lvol = 0; // Left volume
-		u8 m_rvol = 0; // Right volume
-		output_t m_ch; // channel output
-	};
-
-	struct sermode_t
-	{
-		sermode_t()
-			: adc(0)
-			, test(0)
-			, sony_bb(0)
-			, msb(0)
-		{};
+		host_interface_flag_t()
+			: m_host_access(0)
+			, m_host_access_strobe(0)
+			, m_rw(0)
+			, m_rw_strobe(0)
+		{}
 
 		void reset()
 		{
-			adc = 0;
-			test = 0;
-			sony_bb = 0;
-			msb = 0;
+			m_host_access = 0;
+			m_host_access_strobe = 0;
+			m_rw = 0;
+			m_rw_strobe = 0;
 		}
 
-		u8 adc     : 1; // A/D
-		u8 test    : 1; // Test
-		u8 sony_bb : 1; // Sony/BB format serial output
-		u8 msb     : 5; // Serial output MSB
+		u8 m_host_access        : 1; // Host access trigger
+		u8 m_host_access_strobe : 1; // Host access strobe
+		u8 m_rw                 : 1; // R/W state
+		u8 m_rw_strobe          : 1; // R/W strobe
 	};
-
-	voice_t m_voice[32]; // 32 voices
-	sermode_t m_sermode; // Serial mode register
-	output_t m_ch[4];   // 4 stereo output channels
-};
-
-// ES5506 specific
-class es5506_core : public es550x_shared_core
-{
-public:
-	// constructor
-	es5506_core(es550x_intf &intf)
-		: es550x_shared_core(intf)
-		, m_voice{*this,*this,*this,*this,*this,*this,*this,*this,
-		          *this,*this,*this,*this,*this,*this,*this,*this,
-		          *this,*this,*this,*this,*this,*this,*this,*this,
-		          *this,*this,*this,*this,*this,*this,*this,*this}
-	{
-	}
-	// accessors, getters, setters
-	u8 read(u8 address, bool cpu_access = false);
-	void write(u8 address, u8 data, bool cpu_access = false);
-
-	u32 regs_r(u8 page, u8 address, bool cpu_access = false);
-	void regs_w(u8 page, u8 address, u32 data, bool cpu_access = false);
-
-	// internal state
-	void reset();
-	void tick();
-
-	// 6 stereo output channels
-	s32 lout(u8 ch) { return m_output[std::min<u8>(5, ch & 0x7)].m_left; }
-	s32 rout(u8 ch) { return m_output[std::min<u8>(5, ch & 0x7)].m_right; }
-
-	u8 regs_r(u8 page, u8 address) { u8 prev = m_page; m_page = page; u8 ret = read(address, false); m_page = prev; return ret; }
-
-private:
-	struct output_t
-	{
-		void reset()
-		{
-			m_left = 0;
-			m_right = 0;
-		};
-
-		s32 m_left = 0;
-		s32 m_right = 0;
-	};
-
-	// es5506 voice structs
-	struct voice_t : es550x_voice_t
-	{
-		// constructor
-		voice_t(es5506_core &host) : m_host(host) {}
-
-		// internal state
-		virtual void reset() override;
-		virtual void tick(u8 voice) override;
-
-		// accessors, getters, setters
-		// Compressed format
-		s16 decompress(u8 sample)
-		{
-			u8 exponent = bitfield(sample, 5, 3);
-			u8 mantissa = bitfield(sample, 0, 5);
-			return (exponent > 0) ?
-			        s16(((bitfield(mantissa, 4) ? 0x10 : ~0x1f) | bitfield(mantissa, 0, 4)) << (4 + (exponent - 1))) :
-			        s16(((bitfield(mantissa, 4) ? ~0xf : 0) | bitfield(mantissa, 0, 4)) << 4);
-		}
-
-		// volume calculation
-		s32 volume_calc(u16 volume, s32 in)
-		{
-			u8 exponent = bitfield(volume, 12, 4);
-			u8 mantissa = bitfield(volume, 4, 8);
-			return (in * s32(0x100 | mantissa)) >> (19 - exponent);
-		}
-
-		struct filter_ramp_t
-		{
-			filter_ramp_t()
-				: slow(0)
-				, ramp(0)
-			{ };
-
-			void reset()
-			{
-				slow = 0;
-				ramp = 0;
-			};
-
-			u16 slow : 1; // Slow mode flag
-			u16 ramp = 8; // Ramp value
-		};
-
-		// registers
-		es5506_core &m_host;
-		s32 m_lvol = 0; // Left volume - 4 bit exponent, 8 bit mantissa, 4 LSBs are used for fine control of ramp increment for hardware envelope
-		s32 m_lvramp = 0; // Left volume ramp
-		s32 m_rvol = 0; // Right volume
-		s32 m_rvramp = 0; // Righr volume ramp
-		s16 m_ecount = 0; // Envelope counter
-		filter_ramp_t m_k2ramp; // Filter coefficient 2 Ramp
-		filter_ramp_t m_k1ramp; // Filter coefficient 1 Ramp
-		u8 m_filtcount = 0; // Internal counter for slow mode
-		output_t m_ch; // channel output
-	};
-
-	// 5 bit mode
-	struct mode_t
-	{
-		mode_t()
-			: bclk_en(0)
-			, wclk_en(0)
-			, lrclk_en(0)
-			, master(0)
-			, dual(0)
-		{ };
-
-		void reset()
-		{
-			bclk_en = 1;
-			wclk_en = 1;
-			lrclk_en = 1;
-			master = 0;
-			dual = 0;
-		}
-
-		u8 bclk_en  : 1; // Set BCLK to output
-		u8 wclk_en  : 1; // Set WCLK to output
-		u8 lrclk_en : 1; // Set LRCLK to output
-		u8 master   : 1; // Set memory mode to master
-		u8 dual     : 1; // Set dual chip config
-	};
-
-	voice_t m_voice[32]; // 32 voices
-	u8 m_w_st = 0; // Word clock start register
-	u8 m_w_end = 0; // Word clock end register
-	u8 m_lr_end = 0; // Left/Right clock end register
-	mode_t m_mode; // Global mode
-	u32 m_read_latch = 0; // 32 bit register latch for host read
-	u32 m_write_latch = 0; // 32 bit register latch for host write
-	output_t m_ch[6]; // 6 stereo output channels
-	output_t m_output[6]; // Serial outputs
+	host_interface_flag_t m_host_intf; // Host interface flag
+	u8 m_ha = 0;                       // Host address (4 bit)
+	u16 m_hd = 0;                      // Host data (16 bit for ES5504/ES5505, 8 bit for ES5506)
+	u8 m_page = 0;                     // Page
+	es550x_irq_t m_irqv;               // Voice interrupt vector registers
+	// Internal states
+	u8 m_active = max_voices() - 1;    // Activated voices (-1, ~25 for ES5504, ~32 for ES5505/ES5506)
+	u8 m_voice_cycle = 0;              // Voice cycle
+	u8 m_voice_fetch = 0;              // Voice fetch cycle
+	es550x_intf &m_intf;               // es550x specific memory interface
+	clock_pulse_t<s8, 1> m_clkin;      // CLKIN clock
+	clock_pulse_t<s8, 4> m_e;          // E clock (CLKIN / 8), falling edge of CLKIN trigger this clock
 };
 
 #endif
