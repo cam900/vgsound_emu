@@ -44,18 +44,53 @@ public:
 
 	// internal state
 	virtual void reset();
+	virtual void tick() = 0;
 
 	// clock outputs
+	bool _cas() { return m_cas.current_edge(); }
+	bool _cas_rising_edge() { return m_cas.rising_edge(); }
+	bool _cas_falling_edge() { return m_cas.falling_edge(); }
+
 	bool e() { return m_e.current_edge(); }
 	bool e_rising_edge() { return m_e.rising_edge(); }
 	bool e_falling_edge() { return m_e.falling_edge(); }
 
 protected:
 	// Constants
-	virtual const inline u8 max_voices() = 0;
+	virtual inline u8 max_voices() = 0;
 
 	// Shared registers, functions
 	virtual void voice_tick() = 0; // voice tick
+
+	// Interrupt bits
+	struct es550x_irq_t
+	{
+		es550x_irq_t()
+			: voice(0)
+			, irqb(1)
+		{ };
+
+		void reset()
+		{
+			voice = 0;
+			irqb = 1;
+		}
+
+		void set(u8 index)
+		{
+			irqb = 0;
+			voice = index;
+		}
+
+		void clear()
+		{
+			irqb = 1;
+			voice = 0;
+		}
+
+		u8 voice : 5;
+		u8 irqb : 1;
+	};
 
 	// Common control bits
 	struct es550x_control_t
@@ -84,18 +119,28 @@ protected:
 	};
 
 	// Accumulator
-	template<u8 Integer, u8 Fraction, bool Transwave>
 	struct es550x_alu_t
 	{
-		const u8 integer_bits = Integer;
-		const u8 fraction_bits = Fraction;
-		const u8 total_bits = Integer + Fraction;
+		es550x_alu_t(u8 integer, u8 fraction, bool transwave)
+			: m_integer(integer)
+			, m_fraction(fraction)
+			, m_total_bits(integer + fraction)
+			, m_transwave(transwave)
+		{}
+
+		const u8 m_integer;
+		const u8 m_fraction;
+		const u8 m_total_bits;
+		const bool m_transwave;
+
 		void reset();
 		bool busy();
 		bool tick();
 		void loop_exec();
 		s32 interpolation();
 		u32 get_accum_integer();
+		void irq_exec(es550x_intf &intf, es550x_irq_t &irqv, u8 index);
+		void irq_update(es550x_intf &intf, es550x_irq_t &irqv) { intf.irqb(irqv.irqb ? false : true); }
 
 		struct es550x_alu_cr_t
 		{
@@ -163,51 +208,22 @@ protected:
 	};
 
 	// Common voice struct
-	template<u8 Integer, u8 Fraction, bool Transwave>
 	struct es550x_voice_t
 	{
+		es550x_voice_t(u8 integer, u8 fraction, bool transwave)
+			: m_alu(integer, fraction, transwave)
+		{}
+
 		// internal state
 		virtual void reset();
 		virtual void fetch(u8 voice, u8 cycle) = 0;
 		virtual void tick(u8 voice) = 0;
 
 		es550x_control_t m_cr;
-		es550x_alu_t<Integer, Fraction, Transwave> m_alu;
+		es550x_alu_t m_alu;
 		es550x_filter_t m_filter;
 	};
 
-	struct es550x_irq_t
-	{
-		es550x_irq_t()
-			: voice(0)
-			, irqb(1)
-		{ };
-
-		void reset()
-		{
-			voice = 0;
-			irqb = 1;
-		}
-
-		void set(u8 index)
-		{
-			irqb = 0;
-			voice = index;
-		}
-
-		void clear()
-		{
-			irqb = 1;
-			voice = 0;
-		}
-
-		u8 voice : 5;
-		u8 irqb : 1;
-	};
-
-	template<u8 Integer, u8 Fraction, bool Transwave>
-	void irq_exec(es550x_voice_t<Integer, Fraction, Transwave> &voice, u8 index);
-	void irq_update() { m_intf.irqb(m_irqv.irqb ? false : true); }
 
 	// Host interfaces
 	struct host_interface_flag_t
@@ -242,8 +258,9 @@ protected:
 	u8 m_voice_cycle = 0;              // Voice cycle
 	u8 m_voice_fetch = 0;              // Voice fetch cycle
 	es550x_intf &m_intf;               // es550x specific memory interface
-	clock_pulse_t<s8, 1> m_clkin;      // CLKIN clock
-	clock_pulse_t<s8, 4> m_e;          // E clock (CLKIN / 8), falling edge of CLKIN trigger this clock
+	clock_pulse_t<s8, 1, 0> m_clkin;      // CLKIN clock
+	clock_pulse_t<s8, 2, 1> m_cas;        // /CAS clock (CLKIN / 4), falling edge of CLKIN trigger this clock
+	clock_pulse_t<s8, 4, 0> m_e;          // E clock (CLKIN / 8), falling edge of CLKIN trigger this clock
 };
 
 #endif

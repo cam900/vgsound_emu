@@ -33,8 +33,8 @@ public:
 	void host_w(u8 address, u8 data);
 
 	// internal state
-	void reset();
-	void tick();
+	virtual void reset() override;
+	virtual void tick() override;
 
 	// clock outputs
 	bool bclk() { return m_bclk.current_edge(); }
@@ -55,7 +55,7 @@ public:
 	u8 regs_r(u8 page, u8 address) { u8 prev = m_page; m_page = page; u8 ret = read(address, false); m_page = prev; return ret; }
 
 protected:
-	virtual const inline u8 max_voices() { return 32; }
+	virtual inline u8 max_voices() override { return 32; }
 	virtual void voice_tick() override;
 
 private:
@@ -72,10 +72,12 @@ private:
 	};
 
 	// es5506 voice structs
-	struct voice_t : es550x_voice_t<21, 11, true>
+	struct voice_t : es550x_voice_t
 	{
 		// constructor
-		voice_t(es5506_core &host) : m_host(host) {}
+		voice_t(es5506_core &host)
+			: es550x_voice_t(21, 11, true)
+			, m_host(host) {}
 
 		// internal state
 		virtual void reset() override;

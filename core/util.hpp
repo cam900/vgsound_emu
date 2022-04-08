@@ -69,12 +69,15 @@ struct clock_pulse_t
 		m_cycle = 0;
 	}
 
-	bool tick(T width = InitWidth)
+	bool tick(T width = 0)
 	{
 		bool carry = ((--m_counter) <= 0);
 		if (carry)
 		{
-			m_width = width; // reset width
+			if (!width)
+				m_width = m_width_latch;
+			else
+				m_width = width; // reset width
 			m_counter = m_width;
 			m_cycle = 0;
 		}
@@ -84,7 +87,6 @@ struct clock_pulse_t
 		m_edge.tick(carry);
 		return carry;
 	}
-	bool tick() { tick(m_width_latch); }
 
 	void set_width(T width) { m_width = width; }
 	void set_width_latch(T width) { m_width_latch = width; }
@@ -93,13 +95,13 @@ struct clock_pulse_t
 	bool current_edge() { return m_edge.m_current; }
 	bool rising_edge() { return m_edge.m_rising; }
 	bool falling_edge() { return m_edge.m_rising; }
-	bool cycle() { return m_cycle; }
+	T cycle() { return m_cycle; }
 
 	struct edge_t
 	{
 		edge_t()
 			: m_current(InitEdge)
-			, m_previous(~InitEdge)
+			, m_previous(InitEdge ^ 1)
 			, m_rising(0)
 			, m_falling(0)
 			, m_changed(0)
@@ -129,7 +131,7 @@ struct clock_pulse_t
 		void reset()
 		{
 			m_previous = InitEdge;
-			m_current = ~InitEdge;
+			m_current = InitEdge ^ 1;
 			tick(true);
 		}
 

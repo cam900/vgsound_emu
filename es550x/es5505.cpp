@@ -38,12 +38,13 @@ void es5505_core::tick()
 					{
 						if (m_lrclk.current_edge())
 						{
-							m_output = m_output_temp;
-							m_output_latch = m_ch;
-							m_output_temp.reset();
-							// clamp to 16 bit (upper 5 bits are overflow guard bits)
 							for (int i = 0; i < 4; i++)
 							{
+								// copy output
+								m_output[i] = m_output_temp[i];
+								m_output_latch[i] = m_ch[i];
+								m_output_temp[i].reset();
+								// clamp to 16 bit (upper 5 bits are overflow guard bits)
 								m_output_latch[i].m_left = std::clamp(m_output_latch[i].m_left, -0x8000, 0x7fff);
 								m_output_latch[i].m_right = std::clamp(m_output_latch[i].m_right, -0x8000, 0x7fff);
 								// set signed
@@ -71,9 +72,21 @@ void es5505_core::tick()
 				}
 			}
 		}
-		// E
-		if (m_clkin.falling_edge()) // falling edge triggers E clock
+		// /CAS, E
+		if (m_clkin.falling_edge()) // falling edge triggers /CAS, E clock
 		{
+			// /CAS
+			if (m_cas.tick())
+			{
+				// /CAS high, E low: get sample address
+				if (m_cas.falling_edge())
+				{
+					// /CAS low, E low: fetch sample
+					if (!m_e.current_edge())
+						m_voice[m_voice_cycle].fetch(m_voice_cycle, m_voice_fetch);
+				}
+			}
+			// E
 			if (m_e.tick())
 			{
 				m_intf.e(m_e.current_edge());
@@ -123,9 +136,6 @@ void es5505_core::voice_tick()
 		// Update voice
 		m_voice[m_voice_cycle].tick(m_voice_cycle);
 
-		// Update IRQ
-		irq_exec(m_voice[m_voice_cycle], m_voice_cycle);
-
 		// Refresh output
 		if ((++m_voice_cycle) > std::clamp<u8>(m_active, 7, 31)) // 8 ~ 32 voices
 		{
@@ -146,7 +156,7 @@ void es5505_core::voice_tick()
 
 void es5505_core::voice_t::fetch(u8 voice, u8 cycle)
 {
-	m_alu.m_sample[cycle] = m_host.m_intf.read_sample(voice, bitfield(m_cr.bs, 0), bitfield(m_alu.get_accum_integer() + cycle, 0, m_alu.integer_bits));
+	m_alu.m_sample[cycle] = m_host.m_intf.read_sample(voice, bitfield(m_cr.bs, 0), bitfield(m_alu.get_accum_integer() + cycle, 0, m_alu.m_integer));
 }
 
 void es5505_core::voice_t::tick(u8 voice)
@@ -166,6 +176,9 @@ void es5505_core::voice_t::tick(u8 voice)
 		if (m_alu.tick())
 			m_alu.loop_exec();
 	}
+
+	// Update IRQ
+	m_alu.irq_exec(m_host.m_intf, m_host.m_irqv, voice);
 }
 
 // volume calculation
@@ -213,11 +226,7 @@ u16 es5505_core::host_r(u8 address)
 	{
 		m_ha = address;
 		if (m_e.rising_edge()) // update directly
-		{
-			m_host_intf.m_rw = m_host_intf.m_rw_strobe = true;
-			m_host_intf.m_host_access = m_host_intf.m_host_access_strobe = true;
 			m_hd = read(m_ha, true);
-		}
 		else
 		{
 			m_host_intf.m_rw_strobe = true;
@@ -234,10 +243,7 @@ void es5505_core::host_w(u8 address, u16 data)
 		m_ha = address;
 		m_hd = data;
 		if (m_e.rising_edge()) // update directly
-		{
-			m_host_intf.m_rw = m_host_intf.m_rw_strobe = false;
-			m_host_intf.m_host_access = m_host_intf.m_host_access_strobe = true;
-		}
+			write(m_ha, m_hd, true);
 		else
 		{
 			m_host_intf.m_rw_strobe = false;
@@ -274,7 +280,7 @@ u16 es5505_core::regs_r(u8 page, u8 address, bool cpu_access)
 				{
 					m_irqv.clear();
 					if (bitfield(ret, 7) != m_irqv.irqb)
-						irq_update();
+						m_voice[m_irqv.voice].m_alu.irq_update(m_intf, m_irqv);
 				}
 				break;
 			case 15: // PAGE (Page select register)

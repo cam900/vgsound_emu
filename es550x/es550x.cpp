@@ -63,29 +63,13 @@ void es550x_shared_core::reset()
 	m_voice_cycle = 0;
 	m_voice_fetch = 0;
 	m_clkin.reset();
+	m_cas.reset();
 	m_e.reset();
 }
 
-template<u8 Integer, u8 Fraction, bool Transwave>
-void es550x_shared_core::es550x_voice_t<Integer, Fraction, Transwave>::reset()
+void es550x_shared_core::es550x_voice_t::reset()
 {
 	m_cr.reset();
 	m_alu.reset();
 	m_filter.reset();
-}
-
-template<u8 Integer, u8 Fraction, bool Transwave>
-void es550x_shared_core::irq_exec(es550x_voice_t<Integer, Fraction, Transwave> &voice, u8 index)
-{
-	const u8 prev = m_irqv.irqb;
-	if (voice.m_alu.m_cr.irq)
-	{
-		if (m_irqv.irqb)
-		{
-			m_irqv.set(index);
-			voice.m_alu.m_cr.irq = 0;
-		}
-	}
-	if (prev != m_irqv.irqb)
-		irq_update();
 }

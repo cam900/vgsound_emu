@@ -13,9 +13,20 @@
 // Internal functions
 void es5504_core::tick()
 {
-	// CLKIN
-	if (m_clkin.tick())
+	// /CAS, E
+	if (m_clkin.falling_edge()) // falling edge triggers /CAS, E clock
 	{
+		// /CAS
+		if (m_cas.tick())
+		{
+			// /CAS high, E low: get sample address
+			if (m_cas.falling_edge())
+			{
+				// /CAS low, E low: fetch sample
+				if (!m_e.current_edge())
+					m_voice[m_voice_cycle].fetch(m_voice_cycle, m_voice_fetch);
+			}
+		}
 		// E
 		if (m_clkin.falling_edge()) // falling edge triggers E clock
 		{
@@ -68,9 +79,6 @@ void es5504_core::voice_tick()
 		// Update voice
 		m_voice[m_voice_cycle].tick(m_voice_cycle);
 
-		// Update IRQ
-		irq_exec(m_voice[m_voice_cycle], m_voice_cycle);
-
 		// Refresh output (Multiplexed analog output)
 		m_ch[m_voice[m_voice_cycle].m_cr.ca] = m_voice[m_voice_cycle].m_ch;
 
@@ -83,7 +91,7 @@ void es5504_core::voice_tick()
 
 void es5504_core::voice_t::fetch(u8 voice, u8 cycle)
 {
-	m_alu.m_sample[cycle] = m_host.m_intf.read_sample(voice, bitfield(m_cr.ca, 0, 3), bitfield(m_alu.get_accum_integer() + cycle, 0, m_alu.integer_bits));
+	m_alu.m_sample[cycle] = m_host.m_intf.read_sample(voice, bitfield(m_cr.ca, 0, 3), bitfield(m_alu.get_accum_integer() + cycle, 0, m_alu.m_integer));
 }
 
 void es5504_core::voice_t::tick(u8 voice)
@@ -100,11 +108,16 @@ void es5504_core::voice_t::tick(u8 voice)
 
 		// ALU execute
 		if (m_alu.tick())
+		{
 			m_alu.loop_exec();
+		}
 
 		// ADC check
 		adc_exec();
 	}
+
+	// Update IRQ
+	m_alu.irq_exec(m_host.m_intf, m_host.m_irqv, voice);
 }
 
 // ADC; Correct?
@@ -138,11 +151,7 @@ u16 es5504_core::host_r(u8 address)
 	{
 		m_ha = address;
 		if (m_e.rising_edge()) // update directly
-		{
-			m_host_intf.m_rw = m_host_intf.m_rw_strobe = true;
-			m_host_intf.m_host_access = m_host_intf.m_host_access_strobe = true;
 			m_hd = read(m_ha, true);
-		}
 		else
 		{
 			m_host_intf.m_rw_strobe = true;
@@ -159,10 +168,7 @@ void es5504_core::host_w(u8 address, u16 data)
 		m_ha = address;
 		m_hd = data;
 		if (m_e.rising_edge()) // update directly
-		{
-			m_host_intf.m_rw = m_host_intf.m_rw_strobe = false;
-			m_host_intf.m_host_access = m_host_intf.m_host_access_strobe = true;
-		}
+			write(m_ha, m_hd, true);
 		else
 		{
 			m_host_intf.m_rw_strobe = false;
@@ -202,7 +208,7 @@ u16 es5504_core::regs_r(u8 page, u8 address, bool cpu_access)
 				{
 					m_irqv.clear();
 					if (bitfield(ret, 7) != m_irqv.irqb)
-						irq_update();
+						m_voice[m_irqv.voice].m_alu.irq_update(m_intf, m_irqv);
 				}
 				break;
 			case 15: // PAGE (Page select register)
