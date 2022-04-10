@@ -44,7 +44,7 @@ public:
 
 	// internal state
 	virtual void reset();
-	virtual void tick() = 0;
+	virtual void tick() {}
 
 	// clock outputs
 	bool _cas() { return m_cas.current_edge(); }
@@ -57,10 +57,10 @@ public:
 
 protected:
 	// Constants
-	virtual inline u8 max_voices() = 0;
+	virtual inline u8 max_voices() { return 32; }
 
 	// Shared registers, functions
-	virtual void voice_tick() = 0; // voice tick
+	virtual void voice_tick() {} // voice tick
 
 	// Interrupt bits
 	struct es550x_irq_t
