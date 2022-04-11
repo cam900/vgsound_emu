@@ -128,6 +128,31 @@ void es5505_core::tick()
 	}
 }
 
+// less cycle accurate, but less CPU heavy routine
+void es5505_core::tick_perf()
+{
+	// output
+	for (int c = 0; c < 4; c++)
+	{
+		m_output[c].m_left  = std::clamp<s32>(m_ch[c].m_left, -0x8000, 0x7fff);
+		m_output[c].m_right = std::clamp<s32>(m_ch[c].m_right, -0x8000, 0x7fff);
+	}
+
+	// update
+	// falling edge
+	m_intf.e(false);
+	m_voice[m_voice_cycle].fetch(m_voice_cycle, m_voice_fetch);
+	voice_tick();
+	// rising edge
+	m_intf.e(true);
+	// falling edge
+	m_intf.e(false);
+	m_voice[m_voice_cycle].fetch(m_voice_cycle, m_voice_fetch);
+	voice_tick();
+	// rising edge
+	m_intf.e(true);
+}
+
 void es5505_core::voice_tick()
 {
 	// Voice updates every 2 E clock cycle (or 4 BCLK clock cycle)

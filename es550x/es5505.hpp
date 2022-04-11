@@ -36,6 +36,9 @@ public:
 	virtual void reset() override;
 	virtual void tick() override;
 
+	// less cycle accurate, but also less cpu heavy update routine
+	void tick_perf();
+
 	// clock outputs
 	bool bclk() { return m_bclk.current_edge(); }
 	bool bclk_rising_edge() { return m_bclk.rising_edge(); }

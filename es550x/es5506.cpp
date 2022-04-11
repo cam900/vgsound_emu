@@ -162,6 +162,46 @@ void es5506_core::tick()
 	}
 }
 
+// less cycle accurate, but less CPU heavy routine
+void es5506_core::tick_perf()
+{
+	// output
+	if (((!m_mode.lrclk_en) && (!m_mode.bclk_en) && (!m_mode.bclk_en)) && (m_w_st < m_w_end))
+	{
+		const int output_bits = 20 - (m_w_end - m_w_st);
+		if (output_bits < 20)
+		{
+			for (int c = 0; c < 6; c++)
+			{
+				m_output[c].m_left  = std::clamp<s32>(m_ch[c].m_left, -0x80000, 0x7ffff) >> output_bits;
+				m_output[c].m_right = std::clamp<s32>(m_ch[c].m_right, -0x80000, 0x7ffff) >> output_bits;
+			}
+		}
+	}
+	else
+	{
+		for (int c = 0; c < 6; c++)
+		{
+			m_output[c].m_left  = 0;
+			m_output[c].m_right = 0;
+		}
+	}
+
+	// update
+	// falling edge
+	m_intf.e(false);
+	m_voice[m_voice_cycle].fetch(m_voice_cycle, m_voice_fetch);
+	voice_tick();
+	// rising edge
+	m_intf.e(true);
+	// falling edge
+	m_intf.e(false);
+	m_voice[m_voice_cycle].fetch(m_voice_cycle, m_voice_fetch);
+	voice_tick();
+	// rising edge
+	m_intf.e(true);
+}
+
 void es5506_core::voice_tick()
 {
 	// Voice updates every 2 E clock cycle (or 4 BCLK clock cycle)

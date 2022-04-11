@@ -71,6 +71,24 @@ void es5504_core::tick()
 	}
 }
 
+// less cycle accurate, but less CPU heavy routine
+void es5504_core::tick_perf()
+{
+	// update
+	// falling edge
+	m_intf.e(false);
+	m_voice[m_voice_cycle].fetch(m_voice_cycle, m_voice_fetch);
+	voice_tick();
+	// rising edge
+	m_intf.e(true);
+	// falling edge
+	m_intf.e(false);
+	m_voice[m_voice_cycle].fetch(m_voice_cycle, m_voice_fetch);
+	voice_tick();
+	// rising edge
+	m_intf.e(true);
+}
+
 void es5504_core::voice_tick()
 {
 	// Voice updates every 2 E clock cycle (= 1 CHSTRB cycle or 4 BCLK clock cycle)

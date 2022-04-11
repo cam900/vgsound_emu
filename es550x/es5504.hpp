@@ -37,6 +37,9 @@ public:
 	virtual void reset() override;
 	virtual void tick() override;
 
+	// less cycle accurate, but also less cpu heavy update routine
+	void tick_perf();
+
 	// 16 analog output channels
 	s32 out(u8 ch) { return m_ch[ch & 0xf]; }
 
