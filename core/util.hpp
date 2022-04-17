@@ -100,39 +100,44 @@ struct clock_pulse_t
 	struct edge_t
 	{
 		edge_t()
-			: m_current(InitEdge)
-			, m_previous(InitEdge ^ 1)
+			: m_current(InitEdge ^ 1)
+			, m_previous(InitEdge)
 			, m_rising(0)
 			, m_falling(0)
 			, m_changed(0)
 		{
-			m_changed = 1;
-			if (m_current == 1)
-				m_rising = 1;
-			else if (m_current == 0)
-				m_falling = 1;
+			set(InitEdge);
 		}
 
 		void tick(bool toggle)
 		{
-			m_rising = m_falling = m_changed = 0;
+			u8 current = m_current;
 			if (toggle)
+				current ^= 1;
+			set(current);
+		}
+
+		void set(u8 edge)
+		{
+			edge &= 1;
+			m_rising = m_falling = m_changed = 0;
+			if (m_current != edge)
 			{
 				m_changed = 1;
-				m_current = ~m_current;
-				if (m_previous)
+				if (m_current && (!edge))
 					m_falling = 1;
-				else if (!m_previous)
+				else if ((!m_current) && edge)
 					m_rising = 1;
+				m_current = edge;
 			}
-			m_previous = current;
+			m_previous = m_current;
 		}
 
 		void reset()
 		{
 			m_previous = InitEdge;
 			m_current = InitEdge ^ 1;
-			tick(true);
+			set(InitEdge);
 		}
 
 		u8 m_current  : 1; // current edge
