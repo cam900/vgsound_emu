@@ -55,7 +55,8 @@ public:
 	u32 regs_r(u8 page, u8 address, bool cpu_access = false);
 	void regs_w(u8 page, u8 address, u32 data, bool cpu_access = false);
 
-	u8 regs_r(u8 page, u8 address) { u8 prev = m_page; m_page = page; u8 ret = read(address, false); m_page = prev; return ret; }
+	u8 regs8_r(u8 page, u8 address) { u8 prev = m_page; m_page = page; u8 ret = read(address, false); m_page = prev; return ret; }
+	void set_mute(u8 ch, bool mute) { m_voice[ch & 0x1f].m_mute = mute; }
 
 protected:
 	virtual inline u8 max_voices() override { return 32; }
@@ -119,6 +120,7 @@ private:
 		filter_ramp_t m_k1ramp; // Filter coefficient 1 Ramp
 		u8 m_filtcount = 0; // Internal counter for slow mode
 		output_t m_ch; // channel output
+		bool m_mute = false; // mute flag (for debug purpose)
 	};
 
 	// 5 bit mode

@@ -258,9 +258,12 @@ void es5506_core::voice_t::tick(u8 voice)
 
 	if (m_alu.busy())
 	{
-		// Send to output
-		m_ch.m_left = volume_calc(sign_ext<s32>(m_filter.m_o4_1, 16), m_lvol);
-		m_ch.m_right = volume_calc(sign_ext<s32>(m_filter.m_o4_1, 16), m_rvol);
+		if (!m_mute)
+		{
+			// Send to output
+			m_ch.m_left = volume_calc(sign_ext<s32>(m_filter.m_o4_1, 16), m_lvol);
+			m_ch.m_right = volume_calc(sign_ext<s32>(m_filter.m_o4_1, 16), m_rvol);
+		}
 
 		// ALU execute
 		if (m_alu.tick())
@@ -348,6 +351,7 @@ void es5506_core::voice_t::reset()
 	m_k1ramp.reset();
 	m_filtcount = 0;
 	m_ch.reset();
+	m_mute = false;
 }
 
 // Accessors
