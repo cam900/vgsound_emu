@@ -221,7 +221,7 @@ s32 es5505_core::voice_t::volume_calc(u8 volume, s32 in)
 {
 	u8 exponent = bitfield(volume, 4, 4);
 	u8 mantissa = bitfield(volume, 0, 4);
-	return exponent ? (in * s32(0x10 | mantissa)) >> (20 - exponent) : 0;
+	return exponent ? (in * s32(0x10 | mantissa)) >> (19 - exponent) : 0;
 }
 
 void es5505_core::reset()
