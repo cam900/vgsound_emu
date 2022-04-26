@@ -83,7 +83,7 @@ void es5506_core::tick()
 								for (int i = 0; i < 6; i++)
 								{
 									if (m_wclk_lr) // Right output
-										m_output_temp[i].m_right = (m_output_temp[i].m_left << 1) | bitfield(m_output_latch[i].m_right, output_bit);
+										m_output_temp[i].m_right = (m_output_temp[i].m_right << 1) | bitfield(m_output_latch[i].m_right, output_bit);
 									else // Left output
 										m_output_temp[i].m_left = (m_output_temp[i].m_left << 1) | bitfield(m_output_latch[i].m_left, output_bit);
 								}
