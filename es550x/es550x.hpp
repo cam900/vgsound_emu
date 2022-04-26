@@ -21,7 +21,7 @@
 class es550x_intf
 {
 public:
-	virtual void e(bool state) {}     // E output
+	virtual void e_pin(bool state) {}     // E output
 	virtual void bclk(bool state) {}  // BCLK output (serial specific)
 	virtual void lrclk(bool state) {} // LRCLK output (serial specific)
 	virtual void wclk(bool state) {}  // WCLK output (serial specific)
