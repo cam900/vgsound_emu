@@ -307,7 +307,7 @@ s32 es5506_core::voice_t::volume_calc(u16 volume, s32 in)
 {
 	u8 exponent = bitfield(volume, 12, 4);
 	u8 mantissa = bitfield(volume, 4, 8);
-	return (in * s32(0x100 | mantissa)) >> (19 - exponent);
+	return (in * s32(0x100 | mantissa)) >> (20 - exponent);
 }
 
 void es5506_core::reset()
