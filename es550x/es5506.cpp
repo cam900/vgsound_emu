@@ -166,7 +166,7 @@ void es5506_core::tick()
 void es5506_core::tick_perf()
 {
 	// output
-	if (((!m_mode.lrclk_en) && (!m_mode.bclk_en) && (!m_mode.bclk_en)) && (m_w_st < m_w_end))
+	if (((!m_mode.lrclk_en) && (!m_mode.bclk_en) && (!m_mode.wclk_en)) && (m_w_st < m_w_end))
 	{
 		const int output_bits = 20 - (m_w_end - m_w_st);
 		if (output_bits < 20)
@@ -771,7 +771,7 @@ void es5506_core::regs_w(u8 page, u8 address, u32 data, bool cpu_access)
 						v.m_k1ramp.ramp = bitfield(data, 8, 8);
 						break;
 					case 11: // ACT (Number of voices)
-						m_active = std::min<u8>(4, bitfield(data, 0, 5));
+						m_active = std::max<u8>(4, bitfield(data, 0, 5));
 						break;
 					case 12: // MODE (Global Mode)
 						m_mode.lrclk_en = bitfield(data, 0);
