@@ -392,7 +392,7 @@ u8 scc_core::wave_r(bool is_sccplus, u8 address)
 	u8 ret = 0xff;
 	const u8 voice = bitfield(address, 5, 3);
 	if (voice > 4)
-		return;
+		return ret;
 
 	u8 wave_addr = bitfield(address, 0, 5);
 
@@ -406,13 +406,10 @@ u8 scc_core::wave_r(bool is_sccplus, u8 address)
 			if (m_test.rotate4 || m_test.rotate) // rotate flag
 				wave_addr = bitfield(bitfield(address, 0, 5) + m_voice[3 + m_test.rotate].addr, 0, 5);
 		}
-		else
-			return m_voice[voice].wave[wave_addr];
 	}
-	else
-		return m_voice[voice].wave[wave_addr];
+	ret = m_voice[voice].wave[wave_addr];
 
-	return 0xff;
+	return ret;
 }
 
 void scc_core::wave_w(bool is_sccplus, u8 address, u8 data)
