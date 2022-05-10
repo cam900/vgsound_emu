@@ -16,3 +16,4 @@ Video game sound chip emulation cores. useful for emulators, chiptune trackers, 
 
 ## Contributors
 - [cam900](https://github.com/cam900)
+- [Natt Akuma](https://github.com/akumanatt)
