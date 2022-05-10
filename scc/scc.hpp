@@ -148,7 +148,7 @@ class k051649_core : public k051649_scc_core
 public:
 	// constructor
 	k051649_core(vgsound_emu_mem_intf &intf)
-		: k051649_scc_core(*this)
+		: k051649_scc_core()
 		, m_mapper(k051649_mapper_t())
 		, m_scc_enable(false)
 		, m_intf(intf)
@@ -188,7 +188,7 @@ class k052539_core : public k052539_scc_core
 public:
 	// constructor
 	k052539_core(vgsound_emu_mem_intf &intf)
-		: k052539_scc_core(*this)
+		: k052539_scc_core()
 		, m_mapper(k052539_mapper_t())
 		, m_scc_enable(false)
 		, m_is_sccplus(false)
