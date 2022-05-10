@@ -441,10 +441,10 @@ void scc_core::wave_w(bool is_sccplus, u8 address, u8 data)
 
 void scc_core::freq_vol_enable_w(u8 address, u8 data)
 {
-	const u8 voice_freq = bitfield(address, 1, 3);
-	const u8 voice_reg = bitfield(address, 0, 4);
 	// *0-*f Pitch, Volume, Enable
-	switch (voice_reg)
+	address = bitfield(address, 0, 4); // mask address to 4 bit
+	const u8 voice_freq = bitfield(address, 1, 3);
+	switch (address)
 	{
 		case 0x0: // 0x*0 Voice 0 Pitch LSB
 		case 0x2: // 0x*2 Voice 1 Pitch LSB
@@ -469,7 +469,7 @@ void scc_core::freq_vol_enable_w(u8 address, u8 data)
 		case 0xc: // 0x*c Voice 2 Volume
 		case 0xd: // 0x*d Voice 3 Volume
 		case 0xe: // 0x*e Voice 4 Volume
-			m_voice[voice_reg - 0xa].volume = bitfield(data, 0, 4);
+			m_voice[address - 0xa].volume = bitfield(data, 0, 4);
 			break;
 		case 0xf: // 0x*f Enable/Disable flag
 			m_voice[0].enable = bitfield(data, 0);

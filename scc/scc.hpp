@@ -23,8 +23,18 @@ class scc_core
 public:
 	// constructor
 	scc_core()
-		: m_voice{*this,*this,*this,*this,*this}
-	{};
+		: m_voice{
+			*this, *this, *this, *this, *this
+		}
+		, m_test(test_t())
+		, m_out(0)
+	{
+		std::fill(std::begin(m_reg), std::end(m_reg), 0);
+	};
+
+	// destructor
+	~scc_core()
+	{ };
 
 	// accessors
 	virtual u8 scc_r(bool is_sccplus, u8 address) = 0;
@@ -38,12 +48,25 @@ public:
 	s32 out() { return m_out; } // output to DA0...DA10 pin
 	u8 reg(u8 address) { return m_reg[address]; }
 
+	// for preview
+	s32 voice_out(u8 voice) { (voice < 5) ? m_voice[voice].out : 0; }
+
 protected:
-	// voice structs
+	// structs
 	struct voice_t
 	{
 		// constructor
-		voice_t(scc_core &host) : m_host(host) {};
+		voice_t(scc_core &host)
+			: m_host(host)
+			, enable(false)
+			, pitch(0)
+			, volume(0)
+			, addr(0)
+			, counter(0)
+			, out(0)
+		{
+			std::fill(std::begin(wave), std::end(wave), 0);
+		};
 
 		// internal state
 		void reset();
@@ -59,12 +82,6 @@ protected:
 		u16 counter = 0;     // frequency counter
 		s32 out = 0;         // current output
 	};
-	voice_t m_voice[5];    // 5 voices
-
-	// accessor
-	u8 wave_r(bool is_sccplus, u8 address);
-	void wave_w(bool is_sccplus, u8 address, u8 data);
-	void freq_vol_enable_w(u8 address, u8 data);
 
 	struct test_t
 	{
@@ -92,6 +109,14 @@ protected:
 		u8 rotate    : 1; // rotate and write protect waveform for all channels
 		u8 rotate4   : 1; // same as above but for channel 4 only
 	};
+
+	// accessor
+	u8 wave_r(bool is_sccplus, u8 address);
+	void wave_w(bool is_sccplus, u8 address, u8 data);
+	void freq_vol_enable_w(u8 address, u8 data);
+
+	// internal values
+	voice_t m_voice[5];    // 5 voices
 
 	test_t m_test;         // test register
 	s32 m_out = 0;         // output to DA0...10
@@ -124,8 +149,10 @@ public:
 	// constructor
 	k051649_core(vgsound_emu_mem_intf &intf)
 		: k051649_scc_core(*this)
+		, m_mapper(k051649_mapper_t())
+		, m_scc_enable(false)
 		, m_intf(intf)
-	{ };
+	{ }
 
 	// accessors
 	u8 read(u16 address);
@@ -137,12 +164,17 @@ private:
 	// mapper structs
 	struct k051649_mapper_t
 	{
+		k051649_mapper_t()
+			: bank{0, 1, 2, 3}
+		{ };
+
 		// internal state
 		void reset();
 	
 		// registers
-		u8 bank[4] = {0,1,2,3};
+		u8 bank[4] = {0, 1, 2, 3};
 	};
+
 	k051649_mapper_t m_mapper;
 	bool m_scc_enable = false;
 
@@ -157,6 +189,9 @@ public:
 	// constructor
 	k052539_core(vgsound_emu_mem_intf &intf)
 		: k052539_scc_core(*this)
+		, m_mapper(k052539_mapper_t())
+		, m_scc_enable(false)
+		, m_is_sccplus(false)
 		, m_intf(intf)
 	{ };
 
@@ -170,13 +205,21 @@ private:
 	// mapper structs
 	struct k052539_mapper_t
 	{
+		k052539_mapper_t()
+			: bank{0, 1, 2, 3}
+			, ram_enable{false}
+		{
+			std::fill(std::begin(ram_enable), std::end(ram_enable), false);
+		};
+
 		// internal state
 		void reset();
 	
 		// registers
-		u8 bank[4] = {0,1,2,3};
+		u8 bank[4] = {0, 1, 2, 3};
 		bool ram_enable[4] = {false};
 	};
+
 	k052539_mapper_t m_mapper;
 	bool m_scc_enable = false;
 	bool m_is_sccplus = false;

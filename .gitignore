@@ -1,3 +1,6 @@
+.vs/*
+.vscode/*
+
 CMakeLists.txt.user
 CMakeCache.txt
 CMakeFiles
