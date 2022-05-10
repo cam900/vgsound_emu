@@ -1,6 +1,6 @@
 /*
 	License: BSD-3-Clause
-	see https://github.com/cam900/vgsound_emu/LICENSE for more details
+	see https://github.com/cam900/vgsound_emu/blob/main/LICENSE for more details
 
 	Copyright holder(s): cam900
 	Konami K007232 core, Based on Reverse Engineering based info at https://github.com/furrtek/VGChips/tree/master/Konami/007232
