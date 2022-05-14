@@ -25,3 +25,4 @@ This software is published under BSD 3-Clause License, See [here](https://github
 - [cam900](https://github.com/cam900)
 - [Natt Akuma](https://github.com/akumanatt)
 - [James Alan Nguyen](https://github.com/djtuBIG-MaliceX)
+- [Laurens Holst](https://github.com/Grauw)

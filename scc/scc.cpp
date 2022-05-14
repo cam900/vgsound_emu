@@ -3,7 +3,7 @@
 	see https://github.com/cam900/vgsound_emu/blob/main/LICENSE for more details
 
 	Copyright holder(s): cam900
-	Contributor(s): Natt Akuma, James Alan Nguyen
+	Contributor(s): Natt Akuma, James Alan Nguyen, Laurens Holst
 	Konami SCC emulation core
 
 	Konami SCC means "Sound Creative Chip", it's actually MSX MegaROM/RAM Mapper with 5 channel Wavetable sound generator.
@@ -455,6 +455,7 @@ void scc_core::freq_vol_enable_w(u8 address, u8 data)
 			if (m_test.resetpos) // Reset address
 				m_voice[voice_freq].addr = 0;
 			m_voice[voice_freq].pitch = (m_voice[voice_freq].pitch & ~0x0ff) | data;
+			m_voice[voice_freq].counter = m_voice[voice_freq].pitch;
 			break;
 		case 0x1: // 0x*1 Voice 0 Pitch MSB
 		case 0x3: // 0x*3 Voice 1 Pitch MSB
@@ -464,6 +465,7 @@ void scc_core::freq_vol_enable_w(u8 address, u8 data)
 			if (m_test.resetpos) // Reset address
 				m_voice[voice_freq].addr = 0;
 			m_voice[voice_freq].pitch = (m_voice[voice_freq].pitch & ~0xf00) | (u16(bitfield(data, 0, 4)) << 8);
+			m_voice[voice_freq].counter = m_voice[voice_freq].pitch;
 			break;
 		case 0xa: // 0x*a Voice 0 Volume
 		case 0xb: // 0x*b Voice 1 Volume

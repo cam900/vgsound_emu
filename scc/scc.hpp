@@ -3,7 +3,7 @@
 	see https://github.com/cam900/vgsound_emu/blob/main/LICENSE for more details
 
 	Copyright holder(s): cam900
-	Contributor(s): Natt Akuma, James Alan Nguyen
+	Contributor(s): Natt Akuma, James Alan Nguyen, Laurens Holst
 	Konami SCC emulation core
 
 	See scc.cpp for more info.
