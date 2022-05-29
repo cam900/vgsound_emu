@@ -9,7 +9,7 @@ See [here](https://github.com/cam900/vgsound_emu/tree/main) to get latest releas
 
 ## License
 
-This software is distributed under BSD-3-Clause License, See [here](https://github.com/cam900/vgsound_emu/blob/main/LICENSE) for details.
+This software is distributed under [BSD-3-Clause License](https://spdx.org/licenses/BSD-3-Clause.html), See [here](https://github.com/cam900/vgsound_emu/blob/vgsound_emu_v1/LICENSE) for details.
 
 ## Folders
 
