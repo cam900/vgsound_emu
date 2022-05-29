@@ -5,6 +5,7 @@ Video game sound chip emulation cores. useful for emulators, chiptune trackers, 
 ## Important
 
 This is archive branch of V1 version of vgsound_emu, still distributed under BSD-3-Clause License.
+
 See [here](https://github.com/cam900/vgsound_emu/tree/main) to get latest release, distributed under zlib license.
 
 ## License
