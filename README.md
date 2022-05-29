@@ -2,13 +2,19 @@
 
 Video game sound chip emulation cores. useful for emulators, chiptune trackers, or players.
 
+## Important
+
+License is now changed to zlib license in vgsound_emu V2, now you must notify your all modifications.
+
+but [vgsound_emu V1 (pre-V2)](https://github.com/cam900/vgsound_emu/tree/vgsound_emu_v1) is still exists, and it's still distributed under [BSD-3-Clause license](https://spdx.org/licenses/BSD-3-Clause.html).([details](https://github.com/cam900/vgsound_emu/blob/vgsound_emu_v1/LICENSE))
+
 ## V2 revision changes
 
 formatting codes with clang-format, Encapsulation for Maintenance, Fix GCC 12, Change license to zlib license for notify modifications in derived works from this cores.
 
 ## License
 
-This software is distributed under [zlib License](https://spdx.org/licenses/Zlib.html), unlike [pre-V2 vgsound_emu](https://github.com/cam900/vgsound_emu/tree/vgsound_emu_v1)([standard BSD-3-Clause](https://github.com/cam900/vgsound_emu/blob/vgsound_emu_v1/LICENSE)).
+This software is distributed under [zlib License](https://spdx.org/licenses/Zlib.html), unlike [vgsound_emu V1](https://github.com/cam900/vgsound_emu/tree/vgsound_emu_v1)([standard BSD-3-Clause license](https://spdx.org/licenses/BSD-3-Clause.html)([details](https://github.com/cam900/vgsound_emu/blob/vgsound_emu_v1/LICENSE))).
 You must notify your modifications at all files you have modified!
 
 See [here](https://github.com/cam900/vgsound_emu/blob/main/LICENSE) for details.
