@@ -1,5 +1,8 @@
 .vs/*
 .vscode/*
+node_modules/*
+package.json
+package-lock.json
 
 CMakeLists.txt.user
 CMakeCache.txt
