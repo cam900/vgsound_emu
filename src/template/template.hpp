@@ -6,7 +6,7 @@
 	Template for sound emulation core, also guideline
 */
 
-#ifndef _VGSOUND_EMU_SRC_TEMPLATE_HPP
+#ifndef _VGSOUND_EMU_SRC_TEMPLATE_HPP  // _VGSOUND_EMU_ABSOLUTE_PATH_OF_THIS_FILE
 #define _VGSOUND_EMU_SRC_TEMPLATE_HPP
 
 #pragma once
@@ -76,7 +76,7 @@ class template_core
 		std::array<voice_t, 1 /*number of voices*/> m_voice;   // voice classes
 		vgsound_emu_mem_intf &m_intf;						   // common memory interface
 		std::array<u8 /*type*/, 8 /*size of array*/> m_array;  // std::array for static size array
-		std::vector<u8 /*type*/> m_vector(8);  // std::vector for variable size array
+		std::vector<u8 /*type*/> m_vector;	// std::vector for variable size array
 };
 
 #endif

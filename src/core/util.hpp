@@ -15,6 +15,7 @@
 #include <array>
 #include <iterator>
 #include <memory>
+#include <vector>
 
 namespace vgsound_emu
 {

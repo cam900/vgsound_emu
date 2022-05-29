@@ -146,7 +146,7 @@ class x1_010_core
 		void tick();
 
 		// for preview only
-		s32 voice_out(u8 voice, u8 ch) { return if (voice < 16) ? m_voice[voice].out(ch & 1) : 0; }
+		s32 voice_out(u8 voice, u8 ch) { return (voice < 16) ? m_voice[voice].out(ch & 1) : 0; }
 
 	private:
 		std::array<voice_t, 16> m_voice;
