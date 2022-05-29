@@ -10,6 +10,7 @@ formatting codes with clang-format, Encapsulation for Maintenance, Fix GCC 12, C
 
 This software is distributed under [zlib License](https://spdx.org/licenses/Zlib.html), unlike [pre-V2 vgsound_emu](https://github.com/cam900/vgsound_emu/tree/vgsound_emu_v1)([standard BSD-3-Clause](https://github.com/cam900/vgsound_emu/blob/vgsound_emu_v1/LICENSE)).
 You must notify your modifications at all files you have modified!
+
 See [here](https://github.com/cam900/vgsound_emu/blob/main/LICENSE) for details.
 
 ## Folders
