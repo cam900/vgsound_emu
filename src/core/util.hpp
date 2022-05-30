@@ -2,7 +2,7 @@
 	License: Zlib
 	see https://github.com/cam900/vgsound_emu/blob/main/LICENSE for more details
 
-	Copyright holders: cam900
+	Copyright holder(s): cam900
 	Various core utilities for vgsound_emu
 */
 

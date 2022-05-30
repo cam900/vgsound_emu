@@ -2,7 +2,7 @@
 	License: Zlib
 	see https://github.com/cam900/vgsound_emu/blob/main/LICENSE for more details
 
-	Copyright holders: cam900
+	Copyright holder(s): cam900
 	Seta/Allumer X1-010 Emulation core
 
 	See x1_010.cpp for more info.
