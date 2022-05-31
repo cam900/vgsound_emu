@@ -178,6 +178,12 @@ class scc_core
 class k051649_scc_core : public scc_core
 {
 	public:
+		// constructor
+		k051649_scc_core()
+			: scc_core()
+		{
+		}
+
 		// accessors
 		virtual u8 scc_r(bool is_sccplus, u8 address) override;
 		virtual void scc_w(bool is_sccplus, u8 address, u8 data) override;
@@ -186,6 +192,12 @@ class k051649_scc_core : public scc_core
 class k052539_scc_core : public k051649_scc_core
 {
 	public:
+		// constructor
+		k052539_scc_core()
+			: k051649_scc_core()
+		{
+		}
+
 		// accessors
 		virtual u8 scc_r(bool is_sccplus, u8 address) override;
 		virtual void scc_w(bool is_sccplus, u8 address, u8 data) override;

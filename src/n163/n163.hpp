@@ -84,13 +84,9 @@ class n163_core
 		void set_multiplex(bool multiplex = true) { m_multiplex = multiplex; }
 
 		// preview only
-		s16 voice_out(u8 voice)
-		{
-			return ((m_multiplex && ((m_voice_cycle >> 3) == voice)) ||
-					(voice <= (m_ram[0x7f] >> 4)))
-				   ? m_voice_out[voice]
-				   : 0;
-		}
+		u8 voice_cycle() { return m_voice_cycle; }
+
+		s16 voice_out(u8 voice) { return (voice <= (m_ram[0x7f] >> 4)) ? m_voice_out[voice] : 0; }
 
 	private:
 		bool m_disable			   = false;
