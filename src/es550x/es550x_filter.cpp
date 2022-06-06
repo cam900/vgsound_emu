@@ -11,7 +11,7 @@
 #include "es550x.hpp"
 
 // Filter functions
-void es550x_shared_core::es550x_filter_t::reset()
+void es550x_shared_core::es550x_voice_t::es550x_filter_t::reset()
 {
 	m_lp = 0;
 	m_k2 = 0;
@@ -19,7 +19,7 @@ void es550x_shared_core::es550x_filter_t::reset()
 	std::fill(m_o.begin(), m_o.end(), 0);
 }
 
-void es550x_shared_core::es550x_filter_t::tick(s32 in)
+void es550x_shared_core::es550x_voice_t::es550x_filter_t::tick(s32 in)
 {
 	// set sample input
 	m_o[0][0]	 = in;
@@ -52,7 +52,7 @@ void es550x_shared_core::es550x_filter_t::tick(s32 in)
 	}
 }
 
-void es550x_shared_core::es550x_filter_t::lp_exec(s32 coeff, s32 in, s32 out)
+void es550x_shared_core::es550x_voice_t::es550x_filter_t::lp_exec(s32 coeff, s32 in, s32 out)
 {
 	// Store previous filter data
 	m_o[out][1] = m_o[out][0];
@@ -61,7 +61,7 @@ void es550x_shared_core::es550x_filter_t::lp_exec(s32 coeff, s32 in, s32 out)
 	m_o[out][0] = ((coeff * (in - m_o[out][0])) / 4096) + m_o[out][0];
 }
 
-void es550x_shared_core::es550x_filter_t::hp_exec(s32 coeff, s32 in, s32 out)
+void es550x_shared_core::es550x_voice_t::es550x_filter_t::hp_exec(s32 coeff, s32 in, s32 out)
 {
 	// Store previous filter data
 	m_o[out][1] = m_o[out][0];

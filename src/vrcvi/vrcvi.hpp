@@ -14,28 +14,28 @@
 #pragma once
 
 #include "../core/util.hpp"
-using namespace vgsound_emu;
 
-class vrcvi_intf
+class vrcvi_intf : public vgsound_emu_core
 {
 	public:
 		virtual void irq_w(bool irq) {}
 };
 
-class vrcvi_core
+class vrcvi_core : public vgsound_emu_core
 {
 		friend class vrcvi_intf;
 
 	private:
 		// Common ALU for sound channels
-		class alu_t
+		class alu_t : public vgsound_emu_core
 		{
 			private:
-				class divider_t
+				class divider_t : public vgsound_emu_core
 				{
 					public:
 						divider_t()
-							: m_divider(0)
+							: vgsound_emu_core("vrc_vi_frequency_divider")
+							, m_divider(0)
 							, m_enable(0)
 						{
 						}
@@ -49,9 +49,9 @@ class vrcvi_core
 						void write(bool msb, u8 data);
 
 						// getters
-						u16 divider() { return m_divider; }
+						inline u16 divider() { return m_divider; }
 
-						bool enable() { return m_enable; }
+						inline bool enable() { return m_enable; }
 
 					private:
 						u16 m_divider : 12;	 // divider (pitch)
@@ -59,8 +59,10 @@ class vrcvi_core
 				};
 
 			public:
-				alu_t(vrcvi_core &host)
-					: m_host(host)
+				alu_t(std::string tag, vrcvi_core &host)
+					: vgsound_emu_core(tag)
+					, m_host(host)
+					, m_divider(divider_t())
 					, m_counter(0)
 					, m_cycle(0)
 					, m_out(0)
@@ -77,17 +79,17 @@ class vrcvi_core
 				}
 
 				// accessors
-				void clear_cycle() { m_cycle = 0; }
+				inline void clear_cycle() { m_cycle = 0; }
 
 				// getters
 				divider_t &divider() { return m_divider; }
 
-				u16 counter() { return m_counter; }
+				inline u16 counter() { return m_counter; }
 
-				u8 cycle() { return m_cycle; }
+				inline u8 cycle() { return m_cycle; }
 
 				// for previwe/debug only
-				s8 out() { return m_out; }
+				inline s8 out() { return m_out; }
 
 			protected:
 				vrcvi_core &m_host;
@@ -120,7 +122,7 @@ class vrcvi_core
 						}
 
 						// accessors
-						void write(u8 data)
+						inline void write(u8 data)
 						{
 							m_mode	 = (data >> 7) & 0x1;
 							m_duty	 = (data >> 4) & 0x7;
@@ -128,11 +130,11 @@ class vrcvi_core
 						}
 
 						// getters
-						bool mode() { return m_mode; }
+						inline bool mode() { return m_mode; }
 
-						u8 duty() { return m_duty; }
+						inline u8 duty() { return m_duty; }
 
-						u8 volume() { return m_volume; }
+						inline u8 volume() { return m_volume; }
 
 					private:
 						u8 m_mode	: 1;  // duty toggle flag
@@ -142,7 +144,8 @@ class vrcvi_core
 
 			public:
 				pulse_t(vrcvi_core &host)
-					: alu_t(host)
+					: alu_t("vrc_vi_pulse", host)
+					, m_control(pulse_control_t())
 				{
 				}
 
@@ -162,22 +165,26 @@ class vrcvi_core
 		{
 			public:
 				sawtooth_t(vrcvi_core &host)
-					: alu_t(host){};
+					: alu_t("vrc_vi_sawtooth", host)
+					, m_rate(0)
+					, m_accum(0)
+				{
+				}
 
 				virtual void reset() override;
 				virtual bool tick() override;
 				virtual s8 get_output() override;
 
 				// accessors
-				void clear_accum() { m_accum = 0; }
+				inline void clear_accum() { m_accum = 0; }
 
 				// setters
-				void set_rate(u8 rate) { m_rate = rate; }
+				inline void set_rate(u8 rate) { m_rate = rate; }
 
 				// getters
-				u8 rate() { return m_rate; }
+				inline u8 rate() { return m_rate; }
 
-				u8 accum() { return m_accum; }
+				inline u8 accum() { return m_accum; }
 
 			private:
 				u8 m_rate  = 0;	 // sawtooth accumulate rate
@@ -185,18 +192,21 @@ class vrcvi_core
 		};
 
 		// Internal timer
-		class timer_t
+		class timer_t : public vgsound_emu_core
 		{
 			private:
 				// Control bits
-				class timer_control_t
+				class timer_control_t : public vgsound_emu_core
 				{
 					public:
 						timer_control_t()
-							: m_irq_trigger(0)
+							: vgsound_emu_core("vrc_vi_timer_control")
+							, m_irq_trigger(0)
 							, m_enable_ack(0)
 							, m_enable(0)
-							, m_sync(0){};
+							, m_sync(0)
+						{
+						}
 
 						void reset()
 						{
@@ -207,23 +217,26 @@ class vrcvi_core
 						}
 
 						// accessors
-						void irq_set(bool irq) { m_irq_trigger = irq ? 1 : 0; }
+						inline void irq_set(bool irq) { m_irq_trigger = irq ? 1 : 0; }
 
 						// setters
-						void set_enable_ack(bool enable_ack) { m_enable_ack = enable_ack ? 1 : 0; }
+						inline void set_enable_ack(bool enable_ack)
+						{
+							m_enable_ack = enable_ack ? 1 : 0;
+						}
 
-						void set_enable(bool enable) { m_enable = enable ? 1 : 0; }
+						inline void set_enable(bool enable) { m_enable = enable ? 1 : 0; }
 
-						void set_sync(bool sync) { m_sync = sync ? 1 : 0; }
+						inline void set_sync(bool sync) { m_sync = sync ? 1 : 0; }
 
 						// getters
-						bool irq_trigger() { return m_irq_trigger; }
+						inline bool irq_trigger() { return m_irq_trigger; }
 
-						bool enable_ack() { return m_enable_ack; }
+						inline bool enable_ack() { return m_enable_ack; }
 
-						bool enable() { return m_enable; }
+						inline bool enable() { return m_enable; }
 
-						bool sync() { return m_sync; }
+						inline bool sync() { return m_sync; }
 
 					private:
 						u8 m_irq_trigger : 1;
@@ -234,7 +247,14 @@ class vrcvi_core
 
 			public:
 				timer_t(vrcvi_core &host)
-					: m_host(host){};
+					: vgsound_emu_core("vrc_vi_timer")
+					, m_host(host)
+					, m_timer_control(timer_control_t())
+					, m_prescaler(341)
+					, m_counter(0)
+					, m_counter_latch(0)
+				{
+				}
 
 				void reset();
 				bool tick();
@@ -287,16 +307,16 @@ class vrcvi_core
 				}
 
 				// setters
-				void set_counter_latch(u8 counter_latch) { m_counter_latch = counter_latch; }
+				inline void set_counter_latch(u8 counter_latch) { m_counter_latch = counter_latch; }
 
 				// getters
 				timer_control_t &timer_control() { return m_timer_control; }
 
-				s16 prescaler() { return m_prescaler; }
+				inline s16 prescaler() { return m_prescaler; }
 
-				u8 counter() { return m_counter; }
+				inline u8 counter() { return m_counter; }
 
-				u8 counter_latch() { return m_counter_latch; }
+				inline u8 counter_latch() { return m_counter_latch; }
 
 			private:
 				vrcvi_core &m_host;				  // host core
@@ -306,11 +326,12 @@ class vrcvi_core
 				u8 m_counter_latch = 0;			  // clock counter latch
 		};
 
-		class global_control_t
+		class global_control_t : public vgsound_emu_core
 		{
 			public:
 				global_control_t()
-					: m_halt(0)
+					: vgsound_emu_core("vrc_vi_global_control")
+					, m_halt(0)
 					, m_shift(0)
 				{
 				}
@@ -322,16 +343,16 @@ class vrcvi_core
 				}
 
 				// accessors
-				void write(u8 data)
+				inline void write(u8 data)
 				{
 					m_halt	= (data >> 0) & 1;
 					m_shift = (data >> 1) & 3;
 				}
 
 				// getters
-				bool halt() { return m_halt; }
+				inline bool halt() { return m_halt; }
 
-				u8 shift() { return m_shift; }
+				inline u8 shift() { return m_shift; }
 
 			private:
 				u8 m_halt  : 1;	 // halt sound
@@ -341,10 +362,12 @@ class vrcvi_core
 	public:
 		// constructor
 		vrcvi_core(vrcvi_intf &intf)
-			: m_pulse{*this, *this}
+			: vgsound_emu_core("vrc_vi")
+			, m_intf(intf)
+			, m_pulse{*this, *this}
 			, m_sawtooth(*this)
 			, m_timer(*this)
-			, m_intf(intf)
+			, m_control(global_control_t())
 			, m_out(0)
 		{
 		}
@@ -360,20 +383,20 @@ class vrcvi_core
 		void tick();
 
 		// 6 bit output
-		s8 out() { return m_out; }
+		inline s8 out() { return m_out; }
 
 		// for debug/preview only
-		s8 pulse_out(u8 pulse) { return (pulse < 2) ? m_pulse[pulse].out() : 0; }
+		inline s8 pulse_out(u8 pulse) { return (pulse < 2) ? m_pulse[pulse].out() : 0; }
 
-		s8 sawtooth_out() { return m_sawtooth.out(); }
+		inline s8 sawtooth_out() { return m_sawtooth.out(); }
 
 	private:
+		vrcvi_intf &m_intf;
+
 		std::array<pulse_t, 2> m_pulse;	 // 2 pulse channels
 		sawtooth_t m_sawtooth;			 // sawtooth channel
 		timer_t m_timer;				 // internal timer
 		global_control_t m_control;		 // control
-
-		vrcvi_intf &m_intf;
 
 		s8 m_out = 0;  // 6 bit output
 };

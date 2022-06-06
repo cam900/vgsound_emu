@@ -12,17 +12,17 @@
 #pragma once
 
 #include "../core/util.hpp"
-using namespace vgsound_emu;
 
-class n163_core
+class n163_core : public vgsound_emu_core
 {
 	private:
 		// Address latch
-		class addr_latch_t
+		class addr_latch_t : public vgsound_emu_core
 		{
 			public:
 				addr_latch_t()
-					: m_addr(0)
+					: vgsound_emu_core("namco_163_addr_latch")
+					, m_addr(0)
 					, m_incr(0)
 				{
 				}
@@ -34,18 +34,18 @@ class n163_core
 				}
 
 				// accessors
-				void write(u8 data)
+				inline void write(u8 data)
 				{
 					m_addr = (data >> 0) & 0x7f;
 					m_incr = (data >> 7) & 0x01;
 				}
 
-				void addr_inc() { m_addr = (m_addr + 1) & 0x7f; }
+				inline void addr_inc() { m_addr = (m_addr + 1) & 0x7f; }
 
 				// getters
-				u8 addr() { return m_addr; }
+				inline u8 addr() { return m_addr; }
 
-				bool incr() { return m_incr; }
+				inline bool incr() { return m_incr; }
 
 			private:
 				u8 m_addr : 7;
@@ -54,9 +54,11 @@ class n163_core
 
 	public:
 		n163_core()
-			: m_disable(false)
+			: vgsound_emu_core("namco_163")
+			, m_disable(false)
 			, m_ram{0}
 			, m_voice_cycle(0x78)
+			, m_addr_latch(addr_latch_t())
 			, m_out(0)
 			, m_voice_out{0}
 			, m_multiplex(true)
@@ -69,24 +71,27 @@ class n163_core
 		void data_w(u8 data, bool cpu_access = false);
 		u8 data_r(bool cpu_access = false);
 
-		void set_disable(bool disable) { m_disable = disable; }
+		inline void set_disable(bool disable) { m_disable = disable; }
 
 		// internal state
 		void reset();
 		void tick();
 
 		// sound output pin
-		s16 out() { return m_out; }
+		inline s16 out() { return m_out; }
 
 		// register pool
-		u8 reg(u8 addr) { return m_ram[addr & 0x7f]; }
+		inline u8 reg(u8 addr) { return m_ram[addr & 0x7f]; }
 
-		void set_multiplex(bool multiplex = true) { m_multiplex = multiplex; }
+		inline void set_multiplex(bool multiplex = true) { m_multiplex = multiplex; }
 
 		// preview only
-		u8 voice_cycle() { return m_voice_cycle; }
+		inline u8 voice_cycle() { return m_voice_cycle; }
 
-		s16 voice_out(u8 voice) { return (voice <= (m_ram[0x7f] >> 4)) ? m_voice_out[voice] : 0; }
+		inline s16 voice_out(u8 voice)
+		{
+			return (voice <= (m_ram[0x7f] >> 4)) ? m_voice_out[voice] : 0;
+		}
 
 	private:
 		bool m_disable			   = false;

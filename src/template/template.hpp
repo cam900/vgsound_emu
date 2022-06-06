@@ -12,9 +12,8 @@
 #pragma once
 
 #include "../core/util.hpp"
-using namespace vgsound_emu;
 
-class template_core
+class template_core : public vgsound_emu_core
 {
 		friend class vgsound_emu_mem_intf;	// common memory interface if exists
 
@@ -22,12 +21,13 @@ class template_core
 		// place classes and local constants here if exists
 
 		// template voice classes
-		class voice_t
+		class voice_t : public vgsound_emu_core
 		{
 			public:
 				// constructor
 				voice_t(template_core &host)
-					: m_host(host)
+					: vgsound_emu_core("your_voice_tag_here")
+					, m_host(host)
 					, m_something(0)
 				{
 				}
@@ -56,8 +56,13 @@ class template_core
 
 		// constructor
 		template_core(vgsound_emu_mem_intf &intf)
-			: m_voice{*this}
+			: vgsound_emu_core("your_core_tag_here")
+			// initialize all variables in constructor, because constructor is also executable
+			// anywhere, and it works as initializer.
+			, m_voice{*this}
 			, m_intf(intf)
+			, m_array{0}
+			, m_vector{0}
 		{
 		}
 
@@ -73,10 +78,11 @@ class template_core
 	private:
 		// place local variables and functions here
 
-		std::array<voice_t, 1 /*number of voices*/> m_voice;   // voice classes
-		vgsound_emu_mem_intf &m_intf;						   // common memory interface
-		std::array<u8 /*type*/, 8 /*size of array*/> m_array;  // std::array for static size array
-		std::vector<u8 /*type*/> m_vector;	// std::vector for variable size array
+		std::array<voice_t, 1 /*number of voices*/> m_voice;  // voice classes
+		vgsound_emu_mem_intf &m_intf;						  // common memory interface
+		std::array<u8 /*type*/, 8 /*size of array*/> m_array = {
+		  0};									  // std::array for static size array
+		std::vector<u8 /*type*/> m_vector = {0};  // std::vector for variable size array
 };
 
 #endif

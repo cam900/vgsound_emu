@@ -11,7 +11,7 @@
 #include "es550x.hpp"
 
 // Accumulator functions
-void es550x_shared_core::es550x_alu_t::reset()
+void es550x_shared_core::es550x_voice_t::es550x_alu_t::reset()
 {
 	m_cr.reset();
 	m_fc		= 0;
@@ -21,9 +21,9 @@ void es550x_shared_core::es550x_alu_t::reset()
 	m_sample[0] = m_sample[1] = 0;
 }
 
-bool es550x_shared_core::es550x_alu_t::busy() { return m_cr.stop() == 0; }
+bool es550x_shared_core::es550x_voice_t::es550x_alu_t::busy() { return m_cr.stop() == 0; }
 
-bool es550x_shared_core::es550x_alu_t::tick()
+bool es550x_shared_core::es550x_voice_t::es550x_alu_t::tick()
 {
 	if (m_cr.dir())
 	{
@@ -41,7 +41,7 @@ bool es550x_shared_core::es550x_alu_t::tick()
 		   : false;
 }
 
-void es550x_shared_core::es550x_alu_t::loop_exec()
+void es550x_shared_core::es550x_voice_t::es550x_alu_t::loop_exec()
 {
 	if (m_cr.irqe())
 	{  // Set IRQ
@@ -100,7 +100,7 @@ void es550x_shared_core::es550x_alu_t::loop_exec()
 	}
 }
 
-s32 es550x_shared_core::es550x_alu_t::interpolation()
+s32 es550x_shared_core::es550x_voice_t::es550x_alu_t::interpolation()
 {
 	// SF = S1 + ACCfr * (S2 - S1)
 	return m_sample[0] + ((bitfield<s32>(m_accum, std::max<s8>(0, m_fraction - 9), 9) *
@@ -108,12 +108,14 @@ s32 es550x_shared_core::es550x_alu_t::interpolation()
 						  9);
 }
 
-u32 es550x_shared_core::es550x_alu_t::get_accum_integer()
+u32 es550x_shared_core::es550x_voice_t::es550x_alu_t::get_accum_integer()
 {
 	return bitfield(m_accum, m_fraction, m_integer);
 }
 
-void es550x_shared_core::es550x_alu_t::irq_exec(es550x_intf &intf, es550x_irq_t &irqv, u8 index)
+void es550x_shared_core::es550x_voice_t::es550x_alu_t::irq_exec(es550x_intf &intf,
+																es550x_irq_t &irqv,
+																u8 index)
 {
 	const u8 prev = irqv.irqb();
 	if (m_cr.irq())

@@ -15,7 +15,6 @@
 
 #include "../core/util.hpp"
 #include "../core/vox/vox.hpp"
-using namespace vgsound_emu;
 
 class msm6295_core : public vox_core
 {
@@ -38,8 +37,8 @@ class msm6295_core : public vox_core
 		{
 			public:
 				// constructor
-				voice_t(vox_core &vox, msm6295_core &host)
-					: vox_decoder_t(vox)
+				voice_t(msm6295_core &host)
+					: vox_decoder_t(host)
 					, m_host(host)
 					, m_clock(0)
 					, m_busy(false)
@@ -91,11 +90,17 @@ class msm6295_core : public vox_core
 	public:
 		// constructor
 		msm6295_core(vgsound_emu_mem_intf &intf)
-			: m_voice{voice_t{*this, *this},
-				  voice_t{*this, *this},
-				  voice_t{*this, *this},
-				  voice_t{*this, *this}}
+			: vox_core("msm6295")
+			, m_voice{*this, *this, *this, *this}
 			, m_intf(intf)
+			, m_ss(false)
+			, m_command(0)
+			, m_next_command(0)
+			, m_command_pending(false)
+			, m_clock(0)
+			, m_counter(0)
+			, m_out(0)
+			, m_out_temp(0)
 		{
 		}
 
@@ -103,16 +108,16 @@ class msm6295_core : public vox_core
 		u8 busy_r();
 		void command_w(u8 data);
 
-		void ss_w(bool ss) { m_ss = ss; }  // SS pin
+		inline void ss_w(bool ss) { m_ss = ss; }  // SS pin
 
 		// internal state
 		void reset();
 		void tick();
 
-		s32 out() { return m_out; }	 // built in 12 bit DAC
+		inline s32 out() { return m_out; }	// built in 12 bit DAC
 
 		// for preview
-		void voice_mute(u8 voice, bool mute)
+		inline void voice_mute(u8 voice, bool mute)
 		{
 			if (voice < 4)
 			{
@@ -120,7 +125,7 @@ class msm6295_core : public vox_core
 			}
 		}
 
-		s32 voice_out(u8 voice) { return (voice < 4) ? m_voice[voice].out() : 0; }
+		inline s32 voice_out(u8 voice) { return (voice < 4) ? m_voice[voice].out() : 0; }
 
 	private:
 		std::array<voice_t, 4> m_voice;

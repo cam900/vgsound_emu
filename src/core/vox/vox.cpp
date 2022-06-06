@@ -9,21 +9,21 @@
 #include "vox.hpp"
 
 // reset decoder
-void vox_core::decoder_state_t::reset()
+void vox_core::vox_decoder_t::decoder_state_t::reset()
 {
 	m_index = 0;
 	m_step	= 16;
 }
 
 // copy from source
-void vox_core::decoder_state_t::copy(decoder_state_t src)
+void vox_core::vox_decoder_t::decoder_state_t::copy(decoder_state_t src)
 {
 	m_index = src.index();
 	m_step	= src.step();
 }
 
 // decode single nibble
-void vox_core::decoder_state_t::decode(u8 nibble)
+void vox_core::vox_decoder_t::decoder_state_t::decode(u8 nibble)
 {
 	const u8 delta = bitfield(nibble, 0, 3);
 	const s16 ss   = m_vox.m_step_table[m_index];  // ss(n)

@@ -16,19 +16,20 @@
 #pragma once
 
 #include "../core/util.hpp"
-using namespace vgsound_emu;
 
 // shared for SCCs
-class scc_core
+class scc_core : public vgsound_emu_core
 {
 	private:
 		// classes
-		class voice_t
+		class voice_t : public vgsound_emu_core
 		{
 			public:
 				// constructor
 				voice_t(scc_core &host)
-					: m_host(host)
+					: vgsound_emu_core("scc_voice")
+					, m_host(host)
+					, m_wave{0}
 					, m_enable(false)
 					, m_pitch(0)
 					, m_volume(0)
@@ -36,7 +37,6 @@ class scc_core
 					, m_counter(0)
 					, m_out(0)
 				{
-					std::fill(m_wave.begin(), m_wave.end(), 0);
 				}
 
 				// internal state
@@ -44,27 +44,27 @@ class scc_core
 				void tick();
 
 				// accessors
-				void reset_addr() { m_addr = 0; }
+				inline void reset_addr() { m_addr = 0; }
 
 				// setters
-				void set_wave(u8 addr, s8 wave) { m_wave[addr & 0x1f] = wave; }
+				inline void set_wave(u8 addr, s8 wave) { m_wave[addr & 0x1f] = wave; }
 
-				void set_enable(bool enable) { m_enable = enable; }
+				inline void set_enable(bool enable) { m_enable = enable; }
 
-				void set_pitch(u16 pitch, u16 mask = 0xfff)
+				inline void set_pitch(u16 pitch, u16 mask = 0xfff)
 				{
 					m_pitch	  = (m_pitch & ~(mask & 0xfff)) | (pitch & (mask & 0xfff));
 					m_counter = m_pitch;
 				}
 
-				void set_volume(u8 volume) { m_volume = volume & 0xf; }
+				inline void set_volume(u8 volume) { m_volume = volume & 0xf; }
 
 				// getters
-				s8 wave(u8 addr) { return m_wave[addr & 0x1f]; }
+				inline s8 wave(u8 addr) { return m_wave[addr & 0x1f]; }
 
-				u8 addr() { return m_addr; }
+				inline u8 addr() { return m_addr; }
 
-				s32 out() { return m_out; }
+				inline s32 out() { return m_out; }
 
 			private:
 				// registers
@@ -78,12 +78,13 @@ class scc_core
 				s32 m_out	  = 0;					// current output
 		};
 
-		class test_t
+		class test_t : public vgsound_emu_core
 		{
 			public:
 				// constructor
 				test_t()
-					: m_freq_4bit(0)
+					: vgsound_emu_core("scc_test")
+					, m_freq_4bit(0)
 					, m_freq_8bit(0)
 					, m_resetpos(0)
 					, m_rotate(0)
@@ -101,26 +102,26 @@ class scc_core
 				}
 
 				// setters
-				void set_freq_4bit(bool freq_4bit) { m_freq_4bit = freq_4bit; }
+				inline void set_freq_4bit(bool freq_4bit) { m_freq_4bit = freq_4bit; }
 
-				void set_freq_8bit(bool freq_8bit) { m_freq_8bit = freq_8bit; }
+				inline void set_freq_8bit(bool freq_8bit) { m_freq_8bit = freq_8bit; }
 
-				void set_resetpos(bool resetpos) { m_resetpos = resetpos; }
+				inline void set_resetpos(bool resetpos) { m_resetpos = resetpos; }
 
-				void set_rotate(bool rotate) { m_rotate = rotate; }
+				inline void set_rotate(bool rotate) { m_rotate = rotate; }
 
-				void set_rotate4(bool rotate4) { m_rotate4 = rotate4; }
+				inline void set_rotate4(bool rotate4) { m_rotate4 = rotate4; }
 
 				// getters
-				bool freq_4bit() { return m_freq_4bit; }
+				inline bool freq_4bit() { return m_freq_4bit; }
 
-				bool freq_8bit() { return m_freq_8bit; }
+				inline bool freq_8bit() { return m_freq_8bit; }
 
-				bool resetpos() { return m_resetpos; }
+				inline bool resetpos() { return m_resetpos; }
 
-				bool rotate() { return m_rotate; }
+				inline bool rotate() { return m_rotate; }
 
-				bool rotate4() { return m_rotate4; }
+				inline bool rotate4() { return m_rotate4; }
 
 			private:
 				u8 m_freq_4bit : 1;	 // 4 bit frequency
@@ -132,12 +133,13 @@ class scc_core
 
 	public:
 		// constructor
-		scc_core()
-			: m_voice{*this, *this, *this, *this, *this}
+		scc_core(std::string tag)
+			: vgsound_emu_core(tag)
+			, m_voice{*this, *this, *this, *this, *this}
 			, m_test(test_t())
 			, m_out(0)
+			, m_reg{0}
 		{
-			std::fill(m_reg.begin(), m_reg.end(), 0);
 		}
 
 		// destructor
@@ -152,12 +154,12 @@ class scc_core
 		void tick();
 
 		// getters
-		s32 out() { return m_out; }	 // output to DA0...DA10 pin
+		inline s32 out() { return m_out; }	// output to DA0...DA10 pin
 
-		u8 reg(u8 address) { return m_reg[address]; }
+		inline u8 reg(u8 address) { return m_reg[address]; }
 
 		// for preview
-		s32 voice_out(u8 voice) { return (voice < 5) ? m_voice[voice].out() : 0; }
+		inline s32 voice_out(u8 voice) { return (voice < 5) ? m_voice[voice].out() : 0; }
 
 	protected:
 		// accessor
@@ -179,8 +181,8 @@ class k051649_scc_core : public scc_core
 {
 	public:
 		// constructor
-		k051649_scc_core()
-			: scc_core()
+		k051649_scc_core(std::string tag = "k051649_scc")
+			: scc_core(tag)
 		{
 		}
 
@@ -193,8 +195,8 @@ class k052539_scc_core : public k051649_scc_core
 {
 	public:
 		// constructor
-		k052539_scc_core()
-			: k051649_scc_core()
+		k052539_scc_core(std::string tag = "k052539_scc")
+			: k051649_scc_core(tag)
 		{
 		}
 
@@ -210,11 +212,12 @@ class k051649_core : public k051649_scc_core
 
 	private:
 		// mapper classes
-		class k051649_mapper_t
+		class k051649_mapper_t : public vgsound_emu_core
 		{
 			public:
 				k051649_mapper_t()
-					: m_bank{0, 1, 2, 3}
+					: vgsound_emu_core("k051649_mapper")
+					, m_bank{0, 1, 2, 3}
 				{
 				}
 
@@ -222,10 +225,10 @@ class k051649_core : public k051649_scc_core
 				void reset();
 
 				// setters
-				void set_bank(u8 slot, u8 bank) { m_bank[slot & 3] = bank; }
+				inline void set_bank(u8 slot, u8 bank) { m_bank[slot & 3] = bank; }
 
 				// getters
-				u8 bank(u8 slot) { return m_bank[slot & 3]; }
+				inline u8 bank(u8 slot) { return m_bank[slot & 3]; }
 
 			private:
 				// registers
@@ -235,10 +238,10 @@ class k051649_core : public k051649_scc_core
 	public:
 		// constructor
 		k051649_core(vgsound_emu_mem_intf &intf)
-			: k051649_scc_core()
+			: k051649_scc_core("k051649")
+			, m_intf(intf)
 			, m_mapper(k051649_mapper_t())
 			, m_scc_enable(false)
-			, m_intf(intf)
 		{
 		}
 
@@ -249,10 +252,9 @@ class k051649_core : public k051649_scc_core
 		virtual void reset() override;
 
 	private:
+		vgsound_emu_mem_intf m_intf;
 		k051649_mapper_t m_mapper;
 		bool m_scc_enable = false;
-
-		vgsound_emu_mem_intf m_intf;
 };
 
 // MegaRAM Mapper with SCC
@@ -262,11 +264,12 @@ class k052539_core : public k052539_scc_core
 
 	private:
 		// mapper classes
-		class k052539_mapper_t
+		class k052539_mapper_t : public vgsound_emu_core
 		{
 			public:
 				k052539_mapper_t()
-					: m_bank{0, 1, 2, 3}
+					: vgsound_emu_core("k052539_mapper")
+					, m_bank{0, 1, 2, 3}
 					, m_ram_enable{false}
 				{
 				}
@@ -275,17 +278,17 @@ class k052539_core : public k052539_scc_core
 				void reset();
 
 				// setters
-				void set_bank(u8 slot, u8 bank) { m_bank[slot & 3] = bank; }
+				inline void set_bank(u8 slot, u8 bank) { m_bank[slot & 3] = bank; }
 
-				void set_ram_enable(u8 slot, bool ram_enable)
+				inline void set_ram_enable(u8 slot, bool ram_enable)
 				{
 					m_ram_enable[slot & 3] = ram_enable;
 				}
 
 				// getters
-				u8 bank(u8 slot) { return m_bank[slot & 3]; }
+				inline u8 bank(u8 slot) { return m_bank[slot & 3]; }
 
-				bool ram_enable(u8 slot) { return m_ram_enable[slot & 3]; }
+				inline bool ram_enable(u8 slot) { return m_ram_enable[slot & 3]; }
 
 			private:
 				// registers
@@ -296,11 +299,13 @@ class k052539_core : public k052539_scc_core
 	public:
 		// constructor
 		k052539_core(vgsound_emu_mem_intf &intf)
-			: k052539_scc_core()
+			: k052539_scc_core("k052539")
+			, m_intf(intf)
 			, m_mapper(k052539_mapper_t())
 			, m_scc_enable(false)
 			, m_is_sccplus(false)
-			, m_intf(intf){};
+		{
+		}
 
 		// accessors
 		u8 read(u16 address);
@@ -309,11 +314,10 @@ class k052539_core : public k052539_scc_core
 		virtual void reset() override;
 
 	private:
+		vgsound_emu_mem_intf m_intf;
 		k052539_mapper_t m_mapper;
 		bool m_scc_enable = false;
 		bool m_is_sccplus = false;
-
-		vgsound_emu_mem_intf m_intf;
 };
 
 #endif

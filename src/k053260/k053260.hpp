@@ -14,29 +14,34 @@
 #pragma once
 
 #include "../core/util.hpp"
-using namespace vgsound_emu;
 
-class k053260_intf
+class k053260_intf : public vgsound_emu_core
 {
 	public:
+		k053260_intf()
+			: vgsound_emu_core("k053260_intf")
+		{
+		}
+
 		virtual u8 read_sample(u32 address) { return 0; }  // sample fetch
 
 		virtual void write_int(u8 out) {}  // timer interrupt
 };
 
-class k053260_core
+class k053260_core : public vgsound_emu_core
 {
 		friend class k053260_intf;	// k053260 specific interface
 
 	private:
 		const int pan_dir[8] = {-1, 0, 24, 35, 45, 55, 66, 90};	 // pan direction
 
-		class voice_t
+		class voice_t : public vgsound_emu_core
 		{
 			public:
 				// constructor
 				voice_t(k053260_core &host)
-					: m_host(host)
+					: vgsound_emu_core("k053260_voice")
+					, m_host(host)
 					, m_enable(0)
 					, m_busy(0)
 					, m_loop(0)
@@ -178,7 +183,9 @@ class k053260_core
 			public:
 				dac_t()
 					: m_clock(0)
-					, m_state(0){};
+					, m_state(0)
+				{
+				}
 
 				void reset()
 				{
@@ -202,15 +209,23 @@ class k053260_core
 	public:
 		// constructor
 		k053260_core(k053260_intf &intf)
-			: m_voice{*this, *this, *this, *this}
+			: vgsound_emu_core("k053260")
+			, m_voice{*this, *this, *this, *this}
 			, m_intf(intf)
+			, m_host2snd{0}
+			, m_snd2host{0}
+			, m_ctrl(ctrl_t())
+			, m_ym3012(ym3012_t())
+			, m_dac(dac_t())
+			, m_reg{0}
+			, m_out{0}
 		{
 		}
 
 		// communications
-		u8 snd2host_r(u8 address) { return m_snd2host[address & 1]; }
+		inline u8 snd2host_r(u8 address) { return m_snd2host[address & 1]; }
 
-		void host2snd_w(u8 address, u8 data) { m_host2snd[address & 1] = data; }
+		inline void host2snd_w(u8 address, u8 data) { m_host2snd[address & 1] = data; }
 
 		// sound accessors
 		u8 read(u8 address);
@@ -221,24 +236,26 @@ class k053260_core
 		void tick();
 
 		// getters for debug, trackers, etc
-		s32 output(u8 ch) { return m_out[ch & 1]; }	 // output for each channels
+		inline s32 output(u8 ch) { return m_out[ch & 1]; }	// output for each channels
 
-		u8 reg_r(u8 address) { return m_reg[address & 0x3f]; }
+		inline u8 reg_r(u8 address) { return m_reg[address & 0x3f]; }
 
-		s32 voice_out(u8 voice, u8 ch) { return (voice < 4) ? m_voice[voice].out(ch & 1) : 0; }
+		inline s32 voice_out(u8 voice, u8 ch)
+		{
+			return (voice < 4) ? m_voice[voice].out(ch & 1) : 0;
+		}
 
 	private:
 		std::array<voice_t, 4> m_voice;
+		k053260_intf &m_intf;  // common memory interface
 
 		std::array<u8, 2> m_host2snd = {0};
 		std::array<u8, 2> m_snd2host = {0};
 
 		ctrl_t m_ctrl;	// chip control
 
-		ym3012_t m_ym3012;
-		dac_t m_dac;
-
-		k053260_intf &m_intf;  // common memory interface
+		ym3012_t m_ym3012;	// YM3012 output
+		dac_t m_dac;		// YM3012 interface
 
 		std::array<u8, 64> m_reg = {0};	 // register pool
 		std::array<s32, 2> m_out = {0};	 // stereo output

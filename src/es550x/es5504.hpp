@@ -25,8 +25,10 @@ class es5504_core : public es550x_shared_core
 			public:
 				// constructor
 				voice_t(es5504_core &host)
-					: es550x_voice_t(20, 9, false)
+					: es550x_voice_t("es5504_voice", 20, 9, false)
 					, m_host(host)
+					, m_volume(0)
+					, m_out(0)
 				{
 				}
 
@@ -36,12 +38,12 @@ class es5504_core : public es550x_shared_core
 				virtual void tick(u8 voice) override;
 
 				// setters
-				void set_volume(u16 volume) { m_volume = volume; }
+				inline void set_volume(u16 volume) { m_volume = volume; }
 
 				// getters
-				u16 volume() { return m_volume; }
+				inline u16 volume() { return m_volume; }
 
-				s32 out() { return m_out; }
+				inline s32 out() { return m_out; }
 
 			private:
 				void adc_exec();
@@ -55,10 +57,12 @@ class es5504_core : public es550x_shared_core
 	public:
 		// constructor
 		es5504_core(es550x_intf &intf)
-			: es550x_shared_core(intf)
+			: es550x_shared_core("es5504", 25, intf)
 			, m_voice{*this, *this, *this, *this, *this, *this, *this, *this, *this,
 					  *this, *this, *this, *this, *this, *this, *this, *this, *this,
 					  *this, *this, *this, *this, *this, *this, *this}
+			, m_adc(0)
+			, m_out{0}
 		{
 		}
 
@@ -74,7 +78,7 @@ class es5504_core : public es550x_shared_core
 		void tick_perf();
 
 		// 16 analog output channels
-		s32 out(u8 ch) { return m_ch[ch & 0xf]; }
+		inline s32 out(u8 ch) { return m_out[ch & 0xf]; }
 
 		//-----------------------------------------------------------------
 		//
@@ -99,7 +103,7 @@ class es5504_core : public es550x_shared_core
 		}
 
 		// per-voice outputs
-		s32 voice_out(u8 voice) { return (voice < 25) ? m_voice[voice].out() : 0; }
+		inline s32 voice_out(u8 voice) { return (voice < 25) ? m_voice[voice].out() : 0; }
 
 	protected:
 		virtual inline u8 max_voices() override { return 25; }
@@ -108,8 +112,8 @@ class es5504_core : public es550x_shared_core
 
 	private:
 		std::array<voice_t, 25> m_voice;  // 25 voices
-		u16 m_adc				 = 0;	  // ADC register
-		std::array<s32, 16> m_ch = {0};	  // 16 channel outputs
+		u16 m_adc				  = 0;	  // ADC register
+		std::array<s32, 16> m_out = {0};  // 16 channel outputs
 };
 
 #endif

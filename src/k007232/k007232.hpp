@@ -14,11 +14,15 @@
 #pragma once
 
 #include "../core/util.hpp"
-using namespace vgsound_emu;
 
-class k007232_intf
+class k007232_intf : public vgsound_emu_core
 {
 	public:
+		k007232_intf()
+			: vgsound_emu_core("k007232_intf")
+		{
+		}
+
 		// NE pin is executing voice number, and used for per-voice sample bank.
 		virtual u8 read_sample(u8 ne, u32 address) { return 0; }
 
@@ -26,17 +30,18 @@ class k007232_intf
 		virtual void write_slev(u8 out) {}
 };
 
-class k007232_core
+class k007232_core : public vgsound_emu_core
 {
 		friend class k007232_intf;	// k007232 specific interface
 
 	private:
-		class voice_t
+		class voice_t : public vgsound_emu_core
 		{
 			public:
 				// constructor
 				voice_t(k007232_core &host)
-					: m_host(host)
+					: vgsound_emu_core("k007232_voice")
+					, m_host(host)
 					, m_busy(false)
 					, m_loop(false)
 					, m_pitch(0)
@@ -79,8 +84,10 @@ class k007232_core
 	public:
 		// constructor
 		k007232_core(k007232_intf &intf)
-			: m_voice{*this, *this}
+			: vgsound_emu_core("k007232")
+			, m_voice{*this, *this}
 			, m_intf(intf)
+			, m_reg{0}
 		{
 		}
 
@@ -93,11 +100,11 @@ class k007232_core
 		void reset();
 		void tick();
 
-		// getters for debug, trackers, etc
-		s32 output(u8 voice) { return m_voice[voice & 1].out(); }
-
 		// output for each voices, ASD/BSD pin
-		u8 reg_r(u8 address) { return m_reg[address & 0xf]; }
+		inline s32 output(u8 voice) { return m_voice[voice & 1].out(); }
+
+		// getters for debug, trackers, etc
+		inline u8 reg_r(u8 address) { return m_reg[address & 0xf]; }
 
 	private:
 		std::array<voice_t, 2> m_voice;

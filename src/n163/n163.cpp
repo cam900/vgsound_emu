@@ -96,8 +96,10 @@ void n163_core::tick()
 	// tick per each clock
 	const u32 freq = m_ram[m_voice_cycle + 0] | (u32(m_ram[m_voice_cycle + 2]) << 8) |
 					 (bitfield<u32>(m_ram[m_voice_cycle + 4], 0, 2) << 16);	 // 18 bit frequency
+
 	u32 accum = m_ram[m_voice_cycle + 1] | (u32(m_ram[m_voice_cycle + 3]) << 8) |
 				(u32(m_ram[m_voice_cycle + 5]) << 16);	// 24 bit accumulator
+
 	const u16 length = 256 - (m_ram[m_voice_cycle + 4] & 0xfc);
 	const u8 addr	 = m_ram[m_voice_cycle + 6] + bitfield(accum, 16, 8);
 	const s16 wave	 = (bitfield(m_ram[bitfield(addr, 1, 7)], bitfield(addr, 0) << 2, 4) - 8);

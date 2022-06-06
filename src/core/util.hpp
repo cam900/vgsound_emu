@@ -15,6 +15,7 @@
 #include <array>
 #include <iterator>
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace vgsound_emu
@@ -30,36 +31,59 @@ namespace vgsound_emu
 	typedef float f32;
 	typedef double f64;
 
-	const f64 PI = 3.1415926535897932384626433832795;
-
-	// std::clamp is only for C++17 or later; I use my own code
-	template<typename T>
-	T clamp(T in, T min, T max)
-	{
-		return std::min(std::max(in, min), max);
-	}
-
-	// get bitfield, bitfield(input, position, len)
-	template<typename T>
-	T bitfield(T in, u8 pos, u8 len = 1)
-	{
-		return (in >> pos) & (len ? (T(1 << len) - 1) : 1);
-	}
-
-	// get sign extended value, sign_ext<type>(input, len)
-	template<typename T>
-	T sign_ext(T in, u8 len)
-	{
-		len = std::max<u8>(0, (8 * sizeof(T)) - len);
-		return T(T(in) << len) >> len;
-	}
-
-	// convert attenuation decibel value to gain
-	inline f32 dB_to_gain(f32 attenuation) { return powf(10.0f, attenuation / 20.0f); }
-
-	class vgsound_emu_mem_intf
+	class vgsound_emu_core
 	{
 		public:
+			// constructors
+			vgsound_emu_core(std::string tag)
+				: m_tag(tag)
+			{
+			}
+
+			// getters
+			std::string tag() { return m_tag; }
+
+		protected:
+			const f64 PI = 3.1415926535897932384626433832795;
+
+			// std::clamp is only for C++17 or later; I use my own code
+			template<typename T>
+			T clamp(T in, T min, T max)
+			{
+				return std::min(std::max(in, min), max);
+			}
+
+			// get bitfield, bitfield(input, position, len)
+			template<typename T>
+			T bitfield(T in, u8 pos, u8 len = 1)
+			{
+				return (in >> pos) & (len ? (T(1 << len) - 1) : 1);
+			}
+
+			// get sign extended value, sign_ext<type>(input, len)
+			template<typename T>
+			T sign_ext(T in, u8 len)
+			{
+				len = std::max<u8>(0, (8 * sizeof(T)) - len);
+				return T(T(in) << len) >> len;
+			}
+
+			// convert attenuation decibel value to gain
+			inline f32 dB_to_gain(f32 attenuation) { return powf(10.0f, attenuation / 20.0f); }
+
+		private:
+			std::string m_tag = "";	 // core tags
+	};
+
+	class vgsound_emu_mem_intf : public vgsound_emu_core
+	{
+		public:
+			// constructor
+			vgsound_emu_mem_intf()
+				: vgsound_emu_core("mem_intf")
+			{
+			}
+
 			virtual u8 read_byte(u32 address) { return 0; }
 
 			virtual u16 read_word(u32 address) { return 0; }
@@ -77,29 +101,36 @@ namespace vgsound_emu
 			virtual void write_qword(u32 address, u64 data) {}
 	};
 
-	template<typename T, T InitWidth, u8 InitEdge = 0>
-	class clock_pulse_t
+	template<typename T>
+	class clock_pulse_t : public vgsound_emu_core
 	{
 		private:
-			class edge_t
+			const T m_init_width = 1;
+
+			class edge_t : public vgsound_emu_core
 			{
+				private:
+					const u8 m_init_edge = 1;
+
 				public:
-					edge_t()
-						: m_current(InitEdge ^ 1)
-						, m_previous(InitEdge)
+					edge_t(u8 init_edge = 0)
+						: vgsound_emu_core("clock_pulse_edge")
+						, m_init_edge(init_edge)
+						, m_current(init_edge ^ 1)
+						, m_previous(init_edge)
 						, m_rising(0)
 						, m_falling(0)
 						, m_changed(0)
 					{
-						set(InitEdge);
+						set(init_edge);
 					}
 
 					// internal states
 					void reset()
 					{
-						m_previous = InitEdge;
-						m_current  = InitEdge ^ 1;
-						set(InitEdge);
+						m_previous = m_init_edge;
+						m_current  = m_init_edge ^ 1;
+						set(m_init_edge);
 					}
 
 					void tick(bool toggle)
@@ -133,7 +164,13 @@ namespace vgsound_emu
 					}
 
 					// getters
-					bool changed() { return m_changed; }
+					inline bool current() { return m_current; }
+
+					inline bool rising() { return m_rising; }
+
+					inline bool falling() { return m_falling; }
+
+					inline bool changed() { return m_changed; }
 
 				private:
 					u8 m_current  : 1;	// current edge
@@ -144,12 +181,25 @@ namespace vgsound_emu
 			};
 
 		public:
-			void reset(T init = InitWidth)
+			clock_pulse_t(T init_width, u8 init_edge = 0)
+				: vgsound_emu_core("clock_pulse")
+				, m_init_width(init_width)
+				, m_edge(edge_t(init_edge & 1))
+				, m_width(init_width)
+				, m_width_latch(init_width)
+				, m_counter(init_width)
+				, m_cycle(0)
+			{
+			}
+
+			void reset(T init)
 			{
 				m_edge.reset();
 				m_width = m_width_latch = m_counter = init;
 				m_cycle								= 0;
 			}
+
+			inline void reset() { reset(m_init_width); }
 
 			bool tick(T width = 0)
 			{
@@ -176,29 +226,31 @@ namespace vgsound_emu
 				return carry;
 			}
 
-			void set_width(T width) { m_width = width; }
+			inline void set_width(T width) { m_width = width; }
 
-			void set_width_latch(T width) { m_width_latch = width; }
+			inline void set_width_latch(T width) { m_width_latch = width; }
 
 			// Accessors
-			bool current_edge() { return m_edge.m_current; }
+			inline bool current_edge() { return m_edge.current(); }
 
-			bool rising_edge() { return m_edge.m_rising; }
+			inline bool rising_edge() { return m_edge.rising(); }
 
-			bool falling_edge() { return m_edge.m_rising; }
+			inline bool falling_edge() { return m_edge.falling(); }
 
 			// getters
 			edge_t &edge() { return m_edge; }
 
-			T cycle() { return m_cycle; }
+			inline T cycle() { return m_cycle; }
 
 		private:
 			edge_t m_edge;
-			T m_width		= InitWidth;  // clock pulse width
-			T m_width_latch = InitWidth;  // clock pulse width latch
-			T m_counter		= InitWidth;  // clock counter
-			T m_cycle		= 0;		  // clock cycle
+			T m_width		= 1;  // clock pulse width
+			T m_width_latch = 1;  // clock pulse width latch
+			T m_counter		= 1;  // clock counter
+			T m_cycle		= 0;  // clock cycle
 	};
 };	// namespace vgsound_emu
+
+using namespace vgsound_emu;
 
 #endif

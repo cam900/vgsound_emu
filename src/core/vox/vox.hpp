@@ -13,50 +13,52 @@
 
 #include "../util.hpp"
 
-using namespace vgsound_emu;
-
-class vox_core
+class vox_core : public vgsound_emu_core
 {
 	protected:
-		class decoder_state_t
+		class vox_decoder_t : public vgsound_emu_core
 		{
-			public:
-				decoder_state_t(vox_core &vox)
-					: m_vox(vox)
-					, m_index(0)
-					, m_step(16)
-				{
-				}
-
-				// internal states
-				void reset();
-				void decode(u8 nibble);
-
-				// getters
-				s8 index() { return m_index; }
-
-				s32 step() { return m_step; }
-
-				decoder_state_t &operator=(decoder_state_t src)
-				{
-					copy(src);
-					return *this;
-				}
-
 			private:
-				void copy(decoder_state_t src);
+				class decoder_state_t : public vgsound_emu_core
+				{
+					public:
+						decoder_state_t(vox_core &vox)
+							: vgsound_emu_core("vox_decoder_state")
+							, m_vox(vox)
+							, m_index(0)
+							, m_step(16)
+						{
+						}
 
-				vox_core &m_vox;
-				s8 m_index = 0;
-				s32 m_step = 16;
-		};
+						// internal states
+						void reset();
+						void decode(u8 nibble);
 
-		class vox_decoder_t
-		{
+						// getters
+						s8 index() { return m_index; }
+
+						s32 step() { return m_step; }
+
+						decoder_state_t &operator=(decoder_state_t src)
+						{
+							copy(src);
+							return *this;
+						}
+
+					private:
+						void copy(decoder_state_t src);
+
+						vox_core &m_vox;
+						s8 m_index = 0;
+						s32 m_step = 16;
+				};
+
 			public:
 				vox_decoder_t(vox_core &vox)
-					: m_curr(vox)
+					: vgsound_emu_core("vox_decoder")
+					, m_curr(vox)
 					, m_loop(vox)
+					, m_loop_saved(false)
 				{
 				}
 
@@ -99,6 +101,12 @@ class vox_core
 		  16,  17,	19,	 21,  23,  25,	28,	 31,  34,  37,	41,	  45,	50,	  55,	60,	 66,  73,
 		  80,  88,	97,	 107, 118, 130, 143, 157, 173, 190, 209,  230,	253,  279,	307, 337, 371,
 		  408, 449, 494, 544, 598, 658, 724, 796, 876, 963, 1060, 1166, 1282, 1411, 1552};
+
+	public:
+		vox_core(std::string tag)
+			: vgsound_emu_core(tag)
+		{
+		}
 };
 
 #endif

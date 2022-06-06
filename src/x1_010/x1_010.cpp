@@ -91,12 +91,11 @@ void x1_010_core::tick()
 {
 	// reset output
 	m_out[0] = m_out[1] = 0;
-	for (int i = 0; i < 16; i++)
+	for (voice_t &elem : m_voice)
 	{
-		voice_t &v = m_voice[i];
-		v.tick();
-		m_out[0] += v.out(0);
-		m_out[1] += v.out(1);
+		elem.tick();
+		m_out[0] += elem.out(0);
+		m_out[1] += elem.out(1);
 	}
 }
 

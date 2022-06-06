@@ -116,7 +116,7 @@ void es5504_core::voice_tick()
 		m_voice[m_voice_cycle].tick(m_voice_cycle);
 
 		// Refresh output (Multiplexed analog output)
-		m_ch[m_voice[m_voice_cycle].cr().ca()] = m_voice[m_voice_cycle].out();
+		m_out[m_voice[m_voice_cycle].cr().ca()] = m_voice[m_voice_cycle].out();
 
 		if ((++m_voice_cycle) > std::min<u8>(24, m_active))	 // ~ 25 voices
 		{
@@ -182,7 +182,7 @@ void es5504_core::reset()
 	}
 
 	m_adc = 0;
-	std::fill(m_ch.begin(), m_ch.end(), 0);
+	std::fill(m_out.begin(), m_out.end(), 0);
 }
 
 void es5504_core::voice_t::reset()

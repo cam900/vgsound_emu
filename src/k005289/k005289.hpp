@@ -14,17 +14,17 @@
 #pragma once
 
 #include "../core/util.hpp"
-using namespace vgsound_emu;
 
-class k005289_core
+class k005289_core : public vgsound_emu_core
 {
 	private:
-		// k005289 voice classes
-		class voice_t
+		// k005289 timer classes
+		class timer_t : public vgsound_emu_core
 		{
 			public:
-				voice_t()
-					: m_addr(0)
+				timer_t()
+					: vgsound_emu_core("k005289_timer")
+					, m_addr(0)
 					, m_pitch(0)
 					, m_freq(0)
 					, m_counter(0)
@@ -35,13 +35,13 @@ class k005289_core
 				void reset();
 				void tick();
 
-				// setters
-
-				// Load pitch data (address pin)
-				inline void load(u16 addr) { m_pitch = m_addr; }
-
+				// accessors
 				// Replace current frequency to lastest loaded pitch
 				inline void update() { m_freq = m_pitch; }
+
+				// setters
+				// Load pitch data (address pin)
+				inline void load(u16 addr) { m_pitch = m_addr; }
 
 				// getters
 				inline u8 addr() { return m_addr; }
@@ -55,23 +55,31 @@ class k005289_core
 		};
 
 	public:
-		// accessors, getters, setters
-
-		// 1QA...E/2QA...E pin
-		u8 addr(int voice) { return m_voice[voice & 1].addr(); }
-
-		// LD1/2 pin, A0...11 pin
-		void load(int voice, u16 addr) { m_voice[voice & 1].load(addr); }
-
-		// TG1/2 pin
-		void update(int voice) { m_voice[voice & 1].update(); }
+		// constructor
+		k005289_core()
+			: vgsound_emu_core("k005289")
+			, m_timer{timer_t()}
+		{
+		}
 
 		// internal state
 		void reset();
 		void tick();
 
+		// accessors
+		// TG1/2 pin
+		inline void update(int voice) { m_timer[voice & 1].update(); }
+
+		// setters
+		// LD1/2 pin, A0...11 pin
+		inline void load(int voice, u16 addr) { m_timer[voice & 1].load(addr); }
+
+		// getters
+		// 1QA...E/2QA...E pin
+		inline u8 addr(int voice) { return m_timer[voice & 1].addr(); }
+
 	private:
-		std::array<voice_t, 2> m_voice;
+		std::array<timer_t, 2> m_timer;
 };
 
 #endif

@@ -20,7 +20,7 @@
 
 void k005289_core::tick()
 {
-	for (auto &elem : m_voice)
+	for (timer_t &elem : m_timer)
 	{
 		elem.tick();
 	}
@@ -28,13 +28,13 @@ void k005289_core::tick()
 
 void k005289_core::reset()
 {
-	for (auto &elem : m_voice)
+	for (timer_t &elem : m_timer)
 	{
 		elem.reset();
 	}
 }
 
-void k005289_core::voice_t::tick()
+void k005289_core::timer_t::tick()
 {
 	if (bitfield(++m_counter, 0, 12) == 0)
 	{
@@ -43,7 +43,7 @@ void k005289_core::voice_t::tick()
 	}
 }
 
-void k005289_core::voice_t::reset()
+void k005289_core::timer_t::reset()
 {
 	m_addr	  = 0;
 	m_pitch	  = 0;
