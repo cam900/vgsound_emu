@@ -50,7 +50,7 @@ namespace vgsound_emu
 			template<typename T>
 			T clamp(T in, T min, T max)
 			{
-#if _HAS_CXX17
+#if defined(_HAS_CXX17) && _HAS_CXX17
 				// just use std::clamp if C++17 or above
 				return std::clamp(in, min, max);
 #else
