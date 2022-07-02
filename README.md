@@ -4,9 +4,11 @@ Video game sound chip emulation cores. useful for emulators, chiptune trackers, 
 
 ## Important
 
+This repository is archive purpose only, you can get the latest updates in [here](https://gitlab.com/cam900/vgsound_emu).
+
 License is now changed to zlib license in vgsound_emu V2, now you must notify your all modifications.
 
-but [vgsound_emu V1 (pre-V2)](https://github.com/cam900/vgsound_emu/tree/vgsound_emu_v1) is still exists, and it's still distributed under [BSD-3-Clause license](https://spdx.org/licenses/BSD-3-Clause.html).([details](https://github.com/cam900/vgsound_emu/blob/vgsound_emu_v1/LICENSE))
+but [vgsound_emu V1 (pre-V2)](https://gitlab.com/cam900/vgsound_emu/-/tree/vgsound_emu_v1) is still exists, and it's still distributed under [BSD-3-Clause license](https://spdx.org/licenses/BSD-3-Clause.html).([details](https://gitlab.com/cam900/vgsound_emu/-/blob/vgsound_emu_v1/LICENSE))
 
 ## V2 revision changes
 
@@ -14,10 +16,10 @@ formatting codes with clang-format, Encapsulation for Maintenance, Fix GCC 12, C
 
 ## License
 
-This software is distributed under [zlib License](https://spdx.org/licenses/Zlib.html), unlike [vgsound_emu V1](https://github.com/cam900/vgsound_emu/tree/vgsound_emu_v1)([standard BSD-3-Clause license](https://spdx.org/licenses/BSD-3-Clause.html)([details](https://github.com/cam900/vgsound_emu/blob/vgsound_emu_v1/LICENSE))).
+This software is distributed under [zlib License](https://spdx.org/licenses/Zlib.html), unlike [vgsound_emu V1](https://gitlab.com/cam900/vgsound_emu/-/tree/vgsound_emu_v1)([standard BSD-3-Clause license](https://spdx.org/licenses/BSD-3-Clause.html)([details](https://gitlab.com/cam900/vgsound_emu/-/blob/vgsound_emu_v1/LICENSE))).
 You must notify your modifications at all files you have modified!
 
-See [here](https://github.com/cam900/vgsound_emu/blob/main/LICENSE) for details.
+See [here](https://gitlab.com/cam900/vgsound_emu/-/blob/main/LICENSE) for details.
 
 ## Folders
 
@@ -37,7 +39,7 @@ See [here](https://github.com/cam900/vgsound_emu/blob/main/LICENSE) for details.
 
 ## Contributors
 
-- [cam900](https://github.com/cam900)
+- [cam900](https://gitlab.com/cam900)
 - [Natt Akuma](https://github.com/akumanatt)
 - [James Alan Nguyen](https://github.com/djtuBIG-MaliceX)
 - [Laurens Holst](https://github.com/Grauw)
