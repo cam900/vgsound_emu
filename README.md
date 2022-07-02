@@ -4,13 +4,15 @@ Video game sound chip emulation cores. useful for emulators, chiptune trackers, 
 
 ## Important
 
+This repository is archive purpose only, you can get the latest updates in [here](https://gitlab.com/cam900/vgsound_emu).
+
 This is archive branch of V1 version of vgsound_emu, still distributed under BSD-3-Clause License.
 
-See [here](https://github.com/cam900/vgsound_emu/tree/main) to get latest release, distributed under zlib license.
+See [here](https://gitlab.com/cam900/vgsound_emu/-/tree/main) to get latest release, distributed under zlib license.
 
 ## License
 
-This software is distributed under [BSD-3-Clause License](https://spdx.org/licenses/BSD-3-Clause.html), See [here](https://github.com/cam900/vgsound_emu/blob/vgsound_emu_v1/LICENSE) for details.
+This software is distributed under [BSD-3-Clause License](https://spdx.org/licenses/BSD-3-Clause.html), See [here](https://gitlab.com/cam900/vgsound_emu/-/blob/V1/LICENSE) for details.
 
 ## Folders
 
@@ -28,7 +30,7 @@ This software is distributed under [BSD-3-Clause License](https://spdx.org/licen
 
 ## Contributors
 
-- [cam900](https://github.com/cam900)
+- [cam900](https://gitlab.com/cam900)
 - [Natt Akuma](https://github.com/akumanatt)
 - [James Alan Nguyen](https://github.com/djtuBIG-MaliceX)
 - [Laurens Holst](https://github.com/Grauw)
