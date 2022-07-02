@@ -1,6 +1,6 @@
 /*
 	License: Zlib
-	see https://github.com/cam900/vgsound_emu/blob/main/LICENSE for more details
+	see https://gitlab.com/cam900/vgsound_emu/-/blob/main/LICENSE for more details
 
 	Copyright holder(s): (Author name)
 	Template for sound emulation core, also guideline
