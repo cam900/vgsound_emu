@@ -379,7 +379,7 @@ class es550x_shared_core : public vgsound_emu_core
 							, m_k2(0)
 							, m_k1(0)
 						{
-							for (auto &elem : m_o)
+							for (std::array<s32, 2> &elem : m_o)
 							{
 								std::fill(elem.begin(), elem.end(), 0);
 							}
