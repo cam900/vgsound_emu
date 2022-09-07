@@ -16,7 +16,13 @@ void es550x_shared_core::es550x_voice_t::es550x_filter_t::reset()
 	m_lp = 0;
 	m_k2 = 0;
 	m_k1 = 0;
-	std::fill(m_o.begin(), m_o.end(), 0);
+	for (int p = 0; p < 5; p++)
+	{
+		for (int i = 0; i < 2; i++)
+		{
+			m_o[p][i] = 0;
+		}
+	}
 }
 
 void es550x_shared_core::es550x_voice_t::es550x_filter_t::tick(s32 in)
