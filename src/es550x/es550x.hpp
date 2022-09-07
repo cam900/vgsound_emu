@@ -378,8 +378,11 @@ class es550x_shared_core : public vgsound_emu_core
 							, m_lp(0)
 							, m_k2(0)
 							, m_k1(0)
-							, m_o({0})
 						{
+							for (auto &elem : m_o)
+							{
+								std::fill(elem.begin(), elem.end(), 0);
+							}
 						}
 
 						void reset();
@@ -437,7 +440,7 @@ class es550x_shared_core : public vgsound_emu_core
 						s32 m_k1 = 0;  // Filter coefficient 1
 
 						// Filter storage registers
-						std::array<std::array<s32, 2>, 5> m_o = {0};
+						std::array<std::array<s32, 2>, 5> m_o;
 				};
 
 			public:
