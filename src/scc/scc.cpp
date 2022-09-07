@@ -197,14 +197,13 @@
 			  --0- ----   W SCC Compatible mode
 			  --1- ----   W SCC+ mode
 			  ---x ----   W RAM write/Bank select toggle for all Bank pages
-						---0 ----   W Bank select enable
-						---1 ----   W RAM write enable
-						---0 -x--   W RAM write/Bank select toggle for Bank page
-   2
-						---0 --x-   W RAM write/Bank select toggle for Bank page
-   1
-						---0 ---x   W RAM write/Bank select toggle for Bank page
-   0 bfff Mirror of bffe
+			  ---0 ----   W Bank select enable
+			  ---1 ----   W RAM write enable
+			  ---0 -x--   W RAM write/Bank select toggle for Bank page 2
+			  ---0 --x-   W RAM write/Bank select toggle for Bank page 1
+			  ---0 ---x   W RAM write/Bank select toggle for Bank page 0
+
+	bfff Mirror of bffe
 
 	--------------------------------------------------------------------
 
