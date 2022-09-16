@@ -188,7 +188,7 @@ void msm6295_core::voice_t::tick()
 				m_command = 0;
 				m_busy	  = false;
 			}
-			m_out	= (out() * m_volume) >> 7;	// scale out to 12 bit output
+			m_out	= (step() * m_volume) >> 7;	 // scale out to 12 bit output
 			m_clock = 0;
 		}
 	}

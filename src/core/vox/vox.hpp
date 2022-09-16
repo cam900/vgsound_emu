@@ -88,7 +88,7 @@ class vox_core : public vgsound_emu_core
 
 				void decode(u8 nibble) { m_curr.decode(nibble); }
 
-				s32 out() { return m_curr.step(); }
+				s32 step() { return m_curr.step(); }
 
 			private:
 				decoder_state_t m_curr;
