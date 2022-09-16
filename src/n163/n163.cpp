@@ -107,7 +107,7 @@ void n163_core::tick()
 
 	// get per-voice output
 	const s16 voice_out				= (wave * volume);
-	m_voice_out[m_voice_cycle >> 3] = voice_out;
+	m_voice_out[m_voice_cycle >> 4] = voice_out;
 
 	// accumulate address
 	accum = bitfield(accum + freq, 0, 24);
