@@ -90,7 +90,7 @@ class n163_core : public vgsound_emu_core
 
 		inline s16 voice_out(u8 voice)
 		{
-			return (voice <= (m_ram[0x7f] >> 4)) ? m_voice_out[voice] : 0;
+			return (voice <= ((m_ram[0x7f] >> 4) & 7)) ? m_voice_out[voice] : 0;
 		}
 
 	private:
