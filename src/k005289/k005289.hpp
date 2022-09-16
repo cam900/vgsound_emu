@@ -41,7 +41,7 @@ class k005289_core : public vgsound_emu_core
 
 				// setters
 				// Load pitch data (address pin)
-				inline void load(u16 addr) { m_pitch = m_addr; }
+				inline void load(u16 pitch) { m_pitch = pitch; }
 
 				// getters
 				inline u8 addr() { return m_addr; }
