@@ -4,7 +4,7 @@ Video game sound chip emulation cores. useful for emulators, chiptune trackers, 
 
 ## Important
 
-This repository is archive purpose only, you can get the latest updates in [here](https://gitlab.com/cam900/vgsound_emu).
+This repository is archived purpose only, and with receiving critical updates only, you can get the latest updates in [here](https://gitlab.com/cam900/vgsound_emu).
 
 License is now changed to zlib license in vgsound_emu V2, now you must notify your all modifications.
 
