@@ -440,7 +440,7 @@ void es5506_core::host_w(u8 address, u8 data)
 		m_hd = data;
 		if (m_e.rising_edge())
 		{  // update directly
-			write(m_ha, m_hd, true);
+			write(m_ha, m_hd);
 		}
 		else
 		{
@@ -466,7 +466,7 @@ u8 es5506_core::read(u8 address, bool cpu_access)
 	return bitfield(m_read_latch, 24, 8);
 }
 
-void es5506_core::write(u8 address, u8 data, bool cpu_access)
+void es5506_core::write(u8 address, u8 data)
 {
 	const u8 byte  = bitfield(address, 0, 2);  // byte select
 	const u8 shift = 24 - (byte << 3);
@@ -480,7 +480,7 @@ void es5506_core::write(u8 address, u8 data, bool cpu_access)
 		return;
 	}
 
-	regs_w(m_page, address, m_write_latch, cpu_access);
+	regs_w(m_page, address, m_write_latch);
 
 	// Reset latch
 	m_write_latch = 0;
@@ -709,7 +709,7 @@ u32 es5506_core::regs_r(u8 page, u8 address, bool cpu_access)
 	return read_latch;
 }
 
-void es5506_core::regs_w(u8 page, u8 address, u32 data, bool cpu_access)
+void es5506_core::regs_w(u8 page, u8 address, u32 data)
 {
 	// Global registers
 	if (address >= 13)
