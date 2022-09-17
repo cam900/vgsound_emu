@@ -39,15 +39,9 @@ class vox_core : public vgsound_emu_core
 
 						s32 step() { return m_step; }
 
-						decoder_state_t &operator=(decoder_state_t &src)
-						{
-							copy_state(src);
-							return *this;
-						}
-
-					private:
 						void copy_state(decoder_state_t &src);
 
+					private:
 						vox_core &m_vox;
 						s8 m_index = 0;
 						s32 m_step = 16;
@@ -73,7 +67,7 @@ class vox_core : public vgsound_emu_core
 				{
 					if (!m_loop_saved)
 					{
-						m_loop		 = m_curr;
+						m_loop.copy_state(m_curr);
 						m_loop_saved = true;
 					}
 				}
@@ -82,7 +76,7 @@ class vox_core : public vgsound_emu_core
 				{
 					if (m_loop_saved)
 					{
-						m_curr = m_loop;
+						m_curr.copy_state(m_loop);
 					}
 				}
 
